@@ -1,52 +1,57 @@
 # Synology Container Services
-# Deploy Harbor, Gitea, Nexus, and Splunk on Synology DS1621+
+# Deploy container registry (Quay OR Nexus), Gitea, Nexus, and Splunk on Synology DS1621+
 # Network: VLAN 60 (192.168.60.0/24)
+#
+# Container Registry Options:
+# Option 1: Red Hat Quay (enterprise features, security scanning)
+# Option 2: Nexus Docker Registry (unified artifact management)
+# Option 3: Deploy Quay on OpenShift cluster later
 
 version: '3.8'
 
 services:
-  # Harbor Container Registry
-  harbor-core:
-    image: goharbor/harbor-core:v2.9.0
-    container_name: harbor-core
-    restart: unless-stopped
-    depends_on:
-      - harbor-db
-      - harbor-redis
-    networks:
-      - harbor-network
-    ports:
-      - "192.168.60.10:80:8080"
-      - "192.168.60.10:443:8443"
-    environment:
-      - CORE_SECRET=${HARBOR_CORE_SECRET}
-      - JOBSERVICE_SECRET=${HARBOR_JOBSERVICE_SECRET}
-    volumes:
-      - harbor-data:/data
-      - harbor-config:/etc/core
-      - /etc/localtime:/etc/localtime:ro
-
-  harbor-db:
-    image: goharbor/harbor-db:v2.9.0
-    container_name: harbor-db
-    restart: unless-stopped
-    networks:
-      - harbor-network
-    environment:
-      - POSTGRES_PASSWORD=${HARBOR_DB_PASSWORD}
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=registry
-    volumes:
-      - harbor-db-data:/var/lib/postgresql/data
-
-  harbor-redis:
-    image: goharbor/redis-photon:v2.9.0
-    container_name: harbor-redis
-    restart: unless-stopped
-    networks:
-      - harbor-network
-    volumes:
-      - harbor-redis-data:/var/lib/redis
+  # Option 1: Red Hat Quay (Uncomment to use)
+  # quay-redis:
+  #   image: redis:7-alpine
+  #   container_name: quay-redis
+  #   restart: unless-stopped
+  #   networks:
+  #     - quay-network
+  #   volumes:
+  #     - quay-redis-data:/data
+  #
+  # quay-db:
+  #   image: postgres:15-alpine
+  #   container_name: quay-db
+  #   restart: unless-stopped
+  #   networks:
+  #     - quay-network
+  #   environment:
+  #     - POSTGRES_USER=quay
+  #     - POSTGRES_PASSWORD=${QUAY_DB_PASSWORD}
+  #     - POSTGRES_DB=quay
+  #   volumes:
+  #     - quay-db-data:/var/lib/postgresql/data
+  #
+  # quay:
+  #   image: quay.io/projectquay/quay:latest
+  #   container_name: quay
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - quay-db
+  #     - quay-redis
+  #   networks:
+  #     - quay-network
+  #   ports:
+  #     - "192.168.60.10:80:8080"
+  #     - "192.168.60.10:443:8443"
+  #   environment:
+  #     - DEBUGLOG=true
+  #     - DB_URI=postgresql://quay:${QUAY_DB_PASSWORD}@quay-db:5432/quay
+  #   volumes:
+  #     - quay-config:/conf/stack
+  #     - quay-storage:/datastorage
+  #     - /etc/localtime:/etc/localtime:ro
 
   # Gitea Git Repository
   gitea:
@@ -89,7 +94,7 @@ services:
     volumes:
       - gitea-db-data:/var/lib/postgresql/data
 
-  # Nexus Artifact Repository
+  # Nexus Repository (Artifacts + Docker Registry)
   nexus:
     image: sonatype/nexus3:3.41.1
     container_name: nexus
@@ -97,7 +102,9 @@ services:
     networks:
       - nexus-network
     ports:
-      - "192.168.60.11:8081:8081"
+      - "192.168.60.11:8081:8081"    # Nexus UI
+      - "192.168.60.11:8082:8082"    # Docker registry (hosted)
+      - "192.168.60.11:8083:8083"    # Docker registry (proxy)
     environment:
       - NEXUS_SECURITY_RANDOMPASSWORD=false
       - INSTALL4J_ADD_VM_PARAMS=-Xms2703m -Xmx2703m -XX:MaxDirectMemorySize=2703m
@@ -127,8 +134,8 @@ services:
       - /etc/localtime:/etc/localtime:ro
 
 networks:
-  harbor-network:
-    driver: bridge
+  # quay-network:  # Uncomment if using Quay
+  #   driver: bridge
   gitea-network:
     driver: bridge
   nexus-network:
@@ -137,17 +144,17 @@ networks:
     driver: bridge
 
 volumes:
-  # Harbor volumes
-  harbor-data:
-  harbor-config:
-  harbor-db-data:
-  harbor-redis-data:
+  # Quay volumes (uncomment if using Quay)
+  # quay-config:
+  # quay-storage:
+  # quay-db-data:
+  # quay-redis-data:
   
   # Gitea volumes
   gitea-data:
   gitea-db-data:
   
-  # Nexus volumes
+  # Nexus volumes (enhanced for Docker registry)
   nexus-data:
   
   # Splunk volumes
@@ -155,9 +162,13 @@ volumes:
   splunk-etc:
 
 # Environment variables to be set in .env file:
-# HARBOR_CORE_SECRET=<random_string>
-# HARBOR_JOBSERVICE_SECRET=<random_string>
-# HARBOR_DB_PASSWORD=<secure_password>
+# Option 1: If using Quay
+# QUAY_DB_PASSWORD=<secure_password>
+#
+# Option 2: Using Nexus for containers (default)
+# NEXUS_ADMIN_PASSWORD=<secure_password> (set via UI after first start)
+#
+# Common services:
 # GITEA_DB_PASSWORD=<secure_password>
 # SPLUNK_ADMIN_PASSWORD=<secure_password>
 # SPLUNK_HEC_TOKEN=<random_uuid>
