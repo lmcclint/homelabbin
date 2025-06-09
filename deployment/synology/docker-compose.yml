@@ -1,0 +1,164 @@
+# Synology Container Services
+# Deploy Harbor, Gitea, Nexus, and Splunk on Synology DS1621+
+# Network: VLAN 60 (192.168.60.0/24)
+
+version: '3.8'
+
+services:
+  # Harbor Container Registry
+  harbor-core:
+    image: goharbor/harbor-core:v2.9.0
+    container_name: harbor-core
+    restart: unless-stopped
+    depends_on:
+      - harbor-db
+      - harbor-redis
+    networks:
+      - harbor-network
+    ports:
+      - "192.168.60.10:80:8080"
+      - "192.168.60.10:443:8443"
+    environment:
+      - CORE_SECRET=${HARBOR_CORE_SECRET}
+      - JOBSERVICE_SECRET=${HARBOR_JOBSERVICE_SECRET}
+    volumes:
+      - harbor-data:/data
+      - harbor-config:/etc/core
+      - /etc/localtime:/etc/localtime:ro
+
+  harbor-db:
+    image: goharbor/harbor-db:v2.9.0
+    container_name: harbor-db
+    restart: unless-stopped
+    networks:
+      - harbor-network
+    environment:
+      - POSTGRES_PASSWORD=${HARBOR_DB_PASSWORD}
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=registry
+    volumes:
+      - harbor-db-data:/var/lib/postgresql/data
+
+  harbor-redis:
+    image: goharbor/redis-photon:v2.9.0
+    container_name: harbor-redis
+    restart: unless-stopped
+    networks:
+      - harbor-network
+    volumes:
+      - harbor-redis-data:/var/lib/redis
+
+  # Gitea Git Repository
+  gitea:
+    image: gitea/gitea:1.20
+    container_name: gitea
+    restart: unless-stopped
+    networks:
+      - gitea-network
+    ports:
+      - "192.168.60.12:3000:3000"
+      - "192.168.60.12:2222:22"
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__database__DB_TYPE=postgres
+      - GITEA__database__HOST=gitea-db:5432
+      - GITEA__database__NAME=gitea
+      - GITEA__database__USER=gitea
+      - GITEA__database__PASSWD=${GITEA_DB_PASSWORD}
+      - GITEA__server__DOMAIN=git.lab.local
+      - GITEA__server__SSH_DOMAIN=git.lab.local
+      - GITEA__server__ROOT_URL=https://git.lab.local:3000
+    volumes:
+      - gitea-data:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - gitea-db
+
+  gitea-db:
+    image: postgres:15-alpine
+    container_name: gitea-db
+    restart: unless-stopped
+    networks:
+      - gitea-network
+    environment:
+      - POSTGRES_USER=gitea
+      - POSTGRES_PASSWORD=${GITEA_DB_PASSWORD}
+      - POSTGRES_DB=gitea
+    volumes:
+      - gitea-db-data:/var/lib/postgresql/data
+
+  # Nexus Artifact Repository
+  nexus:
+    image: sonatype/nexus3:3.41.1
+    container_name: nexus
+    restart: unless-stopped
+    networks:
+      - nexus-network
+    ports:
+      - "192.168.60.11:8081:8081"
+    environment:
+      - NEXUS_SECURITY_RANDOMPASSWORD=false
+      - INSTALL4J_ADD_VM_PARAMS=-Xms2703m -Xmx2703m -XX:MaxDirectMemorySize=2703m
+    volumes:
+      - nexus-data:/nexus-data
+      - /etc/localtime:/etc/localtime:ro
+
+  # Splunk Enterprise (Initial deployment)
+  splunk:
+    image: splunk/splunk:latest
+    container_name: splunk
+    restart: unless-stopped
+    networks:
+      - splunk-network
+    ports:
+      - "192.168.60.15:8000:8000"   # Web UI
+      - "192.168.60.15:8088:8088"   # HTTP Event Collector
+      - "192.168.60.15:9997:9997"   # Splunk Forwarder
+      - "192.168.60.15:514:514/udp" # Syslog
+    environment:
+      - SPLUNK_START_ARGS=--accept-license
+      - SPLUNK_PASSWORD=${SPLUNK_ADMIN_PASSWORD}
+      - SPLUNK_HEC_TOKEN=${SPLUNK_HEC_TOKEN}
+    volumes:
+      - splunk-data:/opt/splunk/var
+      - splunk-etc:/opt/splunk/etc
+      - /etc/localtime:/etc/localtime:ro
+
+networks:
+  harbor-network:
+    driver: bridge
+  gitea-network:
+    driver: bridge
+  nexus-network:
+    driver: bridge
+  splunk-network:
+    driver: bridge
+
+volumes:
+  # Harbor volumes
+  harbor-data:
+  harbor-config:
+  harbor-db-data:
+  harbor-redis-data:
+  
+  # Gitea volumes
+  gitea-data:
+  gitea-db-data:
+  
+  # Nexus volumes
+  nexus-data:
+  
+  # Splunk volumes
+  splunk-data:
+  splunk-etc:
+
+# Environment variables to be set in .env file:
+# HARBOR_CORE_SECRET=<random_string>
+# HARBOR_JOBSERVICE_SECRET=<random_string>
+# HARBOR_DB_PASSWORD=<secure_password>
+# GITEA_DB_PASSWORD=<secure_password>
+# SPLUNK_ADMIN_PASSWORD=<secure_password>
+# SPLUNK_HEC_TOKEN=<random_uuid>
+
