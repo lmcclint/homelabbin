@@ -29,9 +29,11 @@ This homelab supports Red Hat solution architect testing and development needs, 
     - Additional worker for workload distribution testing
   
 - **Dell T640** (56 cores, 512GB RAM, 40TB NVMe)
-  - vSphere virtualization platform
-  - On-demand test environments
-  - Windows workloads (AD, SQL Server)
+  - RHEL-based hypervisor with KVM/libvirt + Podman
+  - Low-power idle consumption
+  - On-demand test environments (VMs + containers)
+  - Windows workloads (AD, SQL Server) via KVM
+  - Native Red Hat virtualization stack
 
 ## Service Distribution
 
@@ -67,12 +69,18 @@ This homelab supports Red Hat solution architect testing and development needs, 
 - Resource-constrained scenario testing
 - Workload migration testing between SNO and worker
 
-### vSphere Platform (Dell T640)
-- Windows Server 2022 (Active Directory)
-- SQL Server 2022 (multiple editions/versions)
-- Additional k8s test clusters
-- Red Hat Satellite
-- Client testing VMs
+### RHEL Hypervisor Platform (Dell T640)
+- **KVM/libvirt VMs**:
+  - Windows Server 2022 (Active Directory)
+  - SQL Server 2022 (multiple editions/versions)
+  - Additional k8s test clusters
+  - Red Hat Satellite
+  - Client testing VMs
+  - Nested ESXi testing (when needed)
+- **Podman containers**:
+  - Resource-intensive services
+  - Development environments
+  - CI/CD runners
 
 ## Additional Services to Consider
 
@@ -98,13 +106,13 @@ This homelab supports Red Hat solution architect testing and development needs, 
 > **Detailed networking plan**: See [02-networking.md](./02-networking.md)
 
 ### VLAN Summary
-- **VLAN 10**: Management (IPMI, iDRAC, vSphere)
+- **VLAN 10**: Management (IPMI, iDRAC, KVM hypervisor)
 - **VLAN 20**: Core services (DNS, monitoring, k0s cluster)
 - **VLAN 30**: OpenShift compact cluster
 - **VLAN 40**: OpenShift SNO + worker
 - **VLAN 50**: Storage network (high-speed)
 - **VLAN 60**: Container services (Harbor, Nexus, Splunk)
-- **VLAN 70**: vSphere VMs (Windows, SQL, test clusters)
+- **VLAN 70**: KVM VMs (Windows, SQL, test clusters, containers)
 - **VLAN 80**: DMZ/external services
 - **VLAN 90**: Guest/isolated network
 
@@ -121,7 +129,7 @@ This homelab supports Red Hat solution architect testing and development needs, 
    - Install compact 3-node cluster with ACM hub
    - Deploy SNO + worker cluster as ACM spoke
    - Configure GitOps integration
-4. **vSphere Platform**: vSphere install, Windows infrastructure, VM templates
+4. **RHEL Hypervisor Platform**: KVM/libvirt setup, Windows VMs, VM templates, Podman services
 5. **Advanced Services**: Security scanning, advanced monitoring, automation
 
 ## Key Considerations for Red Hat SA Role
@@ -142,10 +150,15 @@ This homelab supports Red Hat solution architect testing and development needs, 
 - **Cons**: Limited CPU, may struggle with heavy indexing
 - **Recommendation**: Start here, monitor CPU usage
 
-### Option 2: vSphere VM (If Synology struggles)
-- **Pros**: Dedicated CPU resources, easy to scale
+### Option 2: KVM VM on T640 (If Synology struggles)
+- **Pros**: Dedicated CPU resources, easy to scale, native RHEL integration
 - **Cons**: Network hop to storage, more resource overhead
 - **Use case**: Heavy indexing, multiple users, enterprise features
+
+### Option 4: Podman on T640 (Alternative)
+- **Pros**: Container efficiency, easy management, resource sharing
+- **Cons**: Less isolation than VM, shared resources
+- **Use case**: Moderate workloads, integrated with other containers
 
 ### Option 3: OpenShift Compact Cluster
 - **Pros**: Kubernetes-native, easy scaling, integrated monitoring

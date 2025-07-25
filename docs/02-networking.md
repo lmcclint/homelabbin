@@ -11,14 +11,14 @@ This document outlines the network architecture for the Red Hat Solution Archite
 
 ### VLAN 10 - Management Network
 - **Subnet**: 192.168.10.0/24
-- **Purpose**: Out-of-band management, IPMI, iDRAC, vSphere management
+- **Purpose**: Out-of-band management, IPMI, iDRAC, hypervisor management
 - **Devices**:
   - Dell T640 iDRAC: 192.168.10.10
-  - M710q IPMI: 192.168.10.11-15
+  - Dell T640 RHEL management: 192.168.10.11
+  - M710q IPMI: 192.168.10.12-16
   - Synology management: 192.168.10.20
   - UNAS Pro management: 192.168.10.21
-  - vSphere vCenter: 192.168.10.100
-  - ESXi hosts: 192.168.10.101-105
+  - Cockpit/libvirt management: 192.168.10.100
 
 ### VLAN 20 - Core Infrastructure Services
 - **Subnet**: 192.168.20.0/24
@@ -55,7 +55,7 @@ This document outlines the network architecture for the Red Hat Solution Archite
   - Synology storage IP: 192.168.50.20
   - UNAS Pro storage IP: 192.168.50.21
   - Democratic-CSI endpoints: 192.168.50.30-39
-  - vSphere datastore network: 192.168.50.100-109
+  - KVM storage network: 192.168.50.100-109
 
 ### VLAN 60 - Container Services
 - **Subnet**: 192.168.60.0/24
@@ -67,15 +67,16 @@ This document outlines the network architecture for the Red Hat Solution Archite
   - Splunk: 192.168.60.15
   - Quay registry: 192.168.60.20
 
-### VLAN 70 - vSphere VMs
+### VLAN 70 - KVM Virtual Machines
 - **Subnet**: 192.168.70.0/24
-- **Purpose**: Virtual machines on Dell T640
+- **Purpose**: KVM/libvirt VMs on Dell T640 RHEL hypervisor
 - **Devices**:
   - Windows Server (AD): 192.168.70.10
   - SQL Server VMs: 192.168.70.20-29
   - RHEL VMs: 192.168.70.30-39
   - Test k8s clusters: 192.168.70.40-49
   - Client VMs: 192.168.70.100-199
+  - Nested ESXi VMs (testing): 192.168.70.200-209
 
 ### VLAN 80 - DMZ/External Services
 - **Subnet**: 192.168.80.0/24
@@ -101,7 +102,7 @@ This document outlines the network architecture for the Red Hat Solution Archite
 - **Management (VLAN 10)** → All VLANs (administrative access)
 - **Core Services (VLAN 20)** → All VLANs (DNS, monitoring)
 - **OpenShift VLANs (30, 40)** → Storage (VLAN 50), Container Services (VLAN 60)
-- **vSphere VMs (VLAN 70)** → Storage (VLAN 50), Core Services (VLAN 20)
+- **KVM VMs (VLAN 70)** → Storage (VLAN 50), Core Services (VLAN 20)
 - **Container Services (VLAN 60)** → Storage (VLAN 50)
 - **DMZ (VLAN 80)** → Specific services only (reverse proxy rules)
 
@@ -118,7 +119,7 @@ This document outlines the network architecture for the Red Hat Solution Archite
   - `lab.local` - General internal services
   - `ocp-compact.lab.local` - Compact OpenShift cluster
   - `ocp-sno.lab.local` - SNO OpenShift cluster
-  - `vsphere.lab.local` - vSphere infrastructure
+  - `kvm.lab.local` - KVM hypervisor infrastructure
   - `storage.lab.local` - Storage services
 
 #### External DNS
@@ -144,7 +145,7 @@ This document outlines the network architecture for the Red Hat Solution Archite
 - **Management**: 192.168.10.150-199 (temporary access)
 - **Core Services**: 192.168.20.150-199 (DHCP reservations)
 - **OpenShift networks**: Static IPs only
-- **vSphere VMs**: 192.168.70.100-199
+- **KVM VMs**: 192.168.70.100-199
 - **Guest**: 192.168.90.100-199
 
 ### NTP
