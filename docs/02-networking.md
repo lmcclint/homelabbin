@@ -5,20 +5,46 @@ This document outlines the network architecture for the Red Hat Solution Archite
 
 ## Current State
 - **UDM SE**: Primary network management
-- **Existing**: VLAN 3 (192.168.1.0/24) - Beelink k0s cluster
+- **Home Network**: VLAN 1 (192.168.1.0/24) - Default/home devices
+- **Existing Lab**: VLAN 3 (192.168.3.0/24) - Beelink k0s cluster
+
+## IP Addressing Strategy
+
+### Current Decision: 192.168.x.x vs 10.x.x.x
+
+**Recommendation: Continue with 192.168.x.x for consistency**
+
+**Pros of 192.168.x.x:**
+- ✅ **Consistency** with existing home network (192.168.1.0/24)
+- ✅ **Simple management** - single addressing scheme
+- ✅ **UDM SE familiarity** - already configured for 192.168.x.x
+- ✅ **Sufficient address space** - 254 addresses per VLAN
+- ✅ **Clear separation** by VLAN ID
+
+**Cons of 192.168.x.x:**
+- ⚠️ **Limited scalability** - only 254 hosts per subnet
+- ⚠️ **Common conflicts** with other networks when traveling
+
+**Alternative: 10.x.x.x (If needed for expansion)**
+- **Lab networks**: 10.10.x.x through 10.100.x.x
+- **More addresses**: /22 or /23 subnets for large deployments
+- **Enterprise-like**: Matches many corporate environments
+- **Migration path**: Can be implemented later if growth demands
+
+**Current Plan**: Proceed with 192.168.x.x - migrate to 10.x.x.x only if hitting limitations
 
 ## Proposed VLAN Architecture
 
 ### VLAN 10 - Management Network
 - **Subnet**: 192.168.10.0/24
-- **Purpose**: Out-of-band management, IPMI, iDRAC, hypervisor management
+- **Purpose**: Out-of-band management, iDRAC, hypervisor management
 - **Devices**:
   - Dell T640 iDRAC: 192.168.10.10
   - Dell T640 RHEL management: 192.168.10.11
-  - M710q IPMI: 192.168.10.12-16
   - Synology management: 192.168.10.20
   - UNAS Pro management: 192.168.10.21
   - Cockpit/libvirt management: 192.168.10.100
+- **Note**: M710q machines have no IPMI - managed via primary NICs on their respective VLANs
 
 ### VLAN 20 - Core Infrastructure Services
 - **Subnet**: 192.168.20.0/24
@@ -93,6 +119,78 @@ This document outlines the network architecture for the Red Hat Solution Archite
 - **Devices**:
   - Guest devices: DHCP pool 192.168.90.100-199
   - Isolated test environments: 192.168.90.200-254
+
+### VLAN 100 - Disconnected/Air-Gapped Network (Optional)
+- **Subnet**: 192.168.100.0/24
+- **Purpose**: Disconnected workflows, air-gapped testing, compliance scenarios
+- **Devices**:
+  - Disconnected OpenShift cluster: 192.168.100.11-13
+  - Local registries: 192.168.100.20-29
+  - Internal DNS/DHCP: 192.168.100.53
+  - Test workloads: 192.168.100.100-199
+- **Features**: No internet access, internal-only registry and services
+- **Alternative**: Can be implemented via KVM NAT networks or isolated VMs
+
+## Disconnected Workflow Implementation Options
+
+### Option 1: Physical VLAN 100 (Recommended for Red Hat SA)
+**Best for**: Customer demos, compliance testing, true air-gap scenarios
+
+```
+Advantages:
+✅ True network isolation
+✅ Realistic customer environment simulation
+✅ Can test disconnected installs completely
+✅ Multiple machines can participate
+✅ Network-level security testing
+
+Disadvantages:
+❌ Requires additional VLAN configuration
+❌ Uses physical network resources
+❌ More complex to set up initially
+```
+
+### Option 2: KVM NAT Networks (Flexible Development)
+**Best for**: Development testing, quick iterations, resource efficiency
+
+```
+Implementation:
+- Create isolated libvirt networks on T640
+- No internet gateway configuration
+- Internal-only DNS and DHCP
+- Can snapshot entire disconnected environments
+
+Advantages:
+✅ Quick to create/destroy
+✅ Resource efficient
+✅ Easy to replicate
+✅ Snapshot capability
+✅ No physical network changes
+
+Disadvantages:
+❌ VM-only (no bare metal testing)
+❌ Limited to T640 resources
+❌ Less realistic networking
+```
+
+### Option 3: Hybrid Approach (Best of Both)
+**Recommended Implementation Strategy:**
+
+1. **Start with KVM NAT** for development and testing
+2. **Add VLAN 100** when needed for:
+   - Customer demonstrations
+   - Compliance scenarios
+   - Multi-node bare metal testing
+   - Red Hat certification labs
+
+### Red Hat SA Use Cases for Disconnected Networks
+
+- **OpenShift Disconnected Installs**: Mirror registries, air-gap procedures
+- **RHEL Satellite**: Disconnected content management
+- **Compliance Testing**: Government/financial air-gap requirements
+- **Customer Demos**: Realistic enterprise scenarios
+- **Certification Prep**: Red Hat exam environments
+- **Security Testing**: Network isolation validation
 
 ## Network Policies and Routing
 

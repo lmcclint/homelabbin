@@ -4,7 +4,8 @@
 
 ### What's Working
 - ✅ **UDM SE**: Operational as primary network management
-- ✅ **VLAN 3**: Existing Beelink k0s cluster (192.168.1.0/24)
+- ✅ **Home Network**: VLAN 1 (192.168.1.0/24) - Default/home devices
+- ✅ **VLAN 3**: Existing Beelink k0s cluster (192.168.3.0/24)
 - ✅ **Basic connectivity**: All hardware networked and accessible
 
 ### What Needs Implementation
@@ -17,7 +18,8 @@
 
 | VLAN | Subnet | Purpose | Priority | Status |
 |------|--------|---------|----------|---------|
-| **3** | 192.168.1.0/24 | Current Beelink cluster | Current | ✅ Active |
+| **1** | 192.168.1.0/24 | Home network devices | Current | ✅ Active |
+| **3** | 192.168.3.0/24 | Current Beelink cluster | Current | ✅ Active |
 | **10** | 192.168.10.0/24 | Management (iDRAC, IPMI) | High | 🚧 Plan |
 | **20** | 192.168.20.0/24 | Core services (DNS, monitoring) | High | 🚧 Plan |
 | **30** | 192.168.30.0/24 | OpenShift compact cluster | Medium | 🚧 Plan |
@@ -27,6 +29,7 @@
 | **70** | 192.168.70.0/24 | KVM virtual machines | Low | 🚧 Plan |
 | **80** | 192.168.80.0/24 | DMZ/external services | Low | 🚧 Plan |
 | **90** | 192.168.90.0/24 | Guest/isolated | Low | 🚧 Plan |
+| **100** | 192.168.100.0/24 | Disconnected/air-gap (optional) | Future | 🔄 Option |
 
 ## 🎯 Implementation Phases
 
@@ -41,7 +44,7 @@ Gateway: 192.168.10.1 (UDM SE)
 Static IP Assignments:
 - Dell T640 iDRAC: 192.168.10.10
 - Dell T640 RHEL mgmt: 192.168.10.11
-- M710q IPMI: 192.168.10.12-16
+- (M710q: No IPMI - managed via primary NICs)
 - Synology mgmt: 192.168.10.20
 - UNAS Pro mgmt: 192.168.10.21
 - Cockpit/libvirt: 192.168.10.100
@@ -270,6 +273,24 @@ Low Priority:
 - [ ] Set up SQL Server VMs
 - [ ] Configure DMZ services
 - [ ] Test external access patterns
+- [ ] **Optional**: Implement disconnected network (VLAN 100 or KVM NAT)
+
+### Disconnected Network Decision Point
+**Red Hat SA Requirement**: Need disconnected/air-gapped testing capability
+
+**Option A: KVM NAT Networks (Recommended Start)**
+- ✅ Quick to implement
+- ✅ Resource efficient 
+- ✅ Good for development/testing
+- ✅ No physical network changes needed
+
+**Option B: Physical VLAN 100 (When Needed)**
+- ✅ True air-gap isolation
+- ✅ Multi-node bare metal testing
+- ✅ Customer demo scenarios
+- ✅ Compliance testing
+
+**Implementation Strategy**: Start with KVM NAT, add VLAN 100 for specific use cases
 
 ## 🚨 Risk Mitigation
 
