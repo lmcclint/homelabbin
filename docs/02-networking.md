@@ -62,7 +62,7 @@ This document outlines the network architecture for the Red Hat Solution Archite
 - **Devices**:
   - OCP nodes: 192.168.30.11-13
   - API/Ingress VIP: 192.168.30.100
-  - Apps wildcard: *.apps.ocp-compact.lab.local → 192.168.30.101
+  - Apps wildcard: *.apps.ocp-compact.lab.2bit.name → 192.168.30.101
   - ACM console: 192.168.30.110
 
 ### VLAN 40 - OpenShift SNO + Worker
@@ -72,7 +72,7 @@ This document outlines the network architecture for the Red Hat Solution Archite
   - SNO node: 192.168.40.11
   - Worker node: 192.168.40.12
   - API/Ingress VIP: 192.168.40.100
-  - Apps wildcard: *.apps.ocp-sno.lab.local → 192.168.40.101
+  - Apps wildcard: *.apps.ocp-sno.lab.2bit.name → 192.168.40.101
 
 ### VLAN 50 - Storage Network
 - **Subnet**: 192.168.50.0/24
@@ -211,18 +211,38 @@ Disadvantages:
 
 ### DNS Strategy
 
-#### Internal DNS (.lab.local)
+#### Internal DNS (.lab.2bit.name)
 - **Primary**: CoreDNS on VLAN 20
+- **Base Domain**: `2bit.name` (owned domain)
+- **Lab Subdomain**: `lab.2bit.name` (internal lab services)
 - **Zones**:
-  - `lab.local` - General internal services
-  - `ocp-compact.lab.local` - Compact OpenShift cluster
-  - `ocp-sno.lab.local` - SNO OpenShift cluster
-  - `kvm.lab.local` - KVM hypervisor infrastructure
-  - `storage.lab.local` - Storage services
+  - `lab.2bit.name` - General internal services
+  - `ocp-compact.lab.2bit.name` - Compact OpenShift cluster
+  - `ocp-sno.lab.2bit.name` - SNO OpenShift cluster
+  - `kvm.lab.2bit.name` - KVM hypervisor infrastructure
+  - `storage.lab.2bit.name` - Storage services
 
-#### External DNS
-- **Public domain**: TBD (for external access)
-- **Split-brain**: Internal and external views
+#### External DNS & Split-Brain
+- **Public domain**: `2bit.name` (owned)
+- **Split-brain**: Internal vs external views of `lab.2bit.name`
+- **External access**: Selective services via reverse proxy
+- **Benefits**: Real domain, SSL certificates, external connectivity
+
+### DNS Strategy Benefits
+
+#### Using .lab.2bit.name (Real Domain)
+- ✅ **Valid SSL certificates** via Let's Encrypt/ACME
+- ✅ **Split-brain DNS** capability (internal vs external views)
+- ✅ **External access** to select services (via DMZ)
+- ✅ **Professional setup** for customer demonstrations
+- ✅ **No .local limitations** (mDNS conflicts, certificate issues)
+- ✅ **Subdomain organization**: 
+  - `ocp-compact.lab.2bit.name` - Production-like cluster
+  - `ocp-sno.lab.2bit.name` - Edge/testing cluster
+  - `harbor.lab.2bit.name` - Container registry
+  - `git.lab.2bit.name` - Source code management
+  - `storage.lab.2bit.name` - Storage services
+  - `kvm.lab.2bit.name` - Virtualization management
 
 ## Load Balancing Strategy
 

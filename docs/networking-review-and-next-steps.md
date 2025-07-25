@@ -76,7 +76,7 @@ Migration Plan:
 2. Schedule maintenance window
 3. Migrate Beelink cluster from VLAN 3 → VLAN 20
 4. Update democratic-csi storage network
-5. Deploy CoreDNS with .lab.local zones
+5. Deploy CoreDNS with .lab.2bit.name zones
 
 Static IP Assignments:
 - Beelink k0s cluster: 192.168.20.11-13
@@ -103,7 +103,7 @@ M710q Assignment:
 - ACM Console: 192.168.30.110
 - MetalLB pool: 192.168.30.200-220
 
-DNS: *.apps.ocp-compact.lab.local → 192.168.30.101
+DNS: *.apps.ocp-compact.lab.2bit.name → 192.168.30.101
 ```
 
 #### VLAN 40 - SNO + Worker Cluster
@@ -118,7 +118,7 @@ M710q Assignment:
 - Apps Ingress: 192.168.40.101
 - MetalLB pool: 192.168.40.200-220
 
-DNS: *.apps.ocp-sno.lab.local → 192.168.40.101
+DNS: *.apps.ocp-sno.lab.2bit.name → 192.168.40.101
 ```
 
 ### Phase 3: Application Services (Week 5-6)
@@ -137,10 +137,10 @@ Synology Container Deployment:
 - MetalLB pool: 192.168.60.200-220
 
 DNS Zones:
-- harbor.lab.local → 192.168.60.10
-- nexus.lab.local → 192.168.60.11
-- git.lab.local → 192.168.60.12
-- splunk.lab.local → 192.168.60.15
+- harbor.lab.2bit.name → 192.168.60.10
+- nexus.lab.2bit.name → 192.168.60.11
+- git.lab.2bit.name → 192.168.60.12
+- splunk.lab.2bit.name → 192.168.60.15
 ```
 
 ### Phase 4: Virtualization & DMZ (Week 7-8)
