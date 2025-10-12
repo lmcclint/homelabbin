@@ -50,6 +50,7 @@ This homelab supports testing and development needs, focusing on OpenShift, Kube
 - Artifact repository (Nexus/Artifactory)
 - Git repository (Gitea/GitLab CE)
 - Democratic-CSI storage provisioner
+- Secrets store (HashiCorp Vault CE)
 - **Splunk** (initial placement - monitor CPU usage)
 
 ### OpenShift Clusters (M710q nodes)

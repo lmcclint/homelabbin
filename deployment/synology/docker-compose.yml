@@ -133,6 +133,26 @@ services:
       - splunk-etc:/opt/splunk/etc
       - /etc/localtime:/etc/localtime:ro
 
+  # HashiCorp Vault (single-node, Raft)
+  vault:
+    image: hashicorp/vault:1.16
+    container_name: vault
+    restart: unless-stopped
+    cap_add:
+      - IPC_LOCK
+    networks:
+      - vault-network
+    ports:
+      - "10.20.60.14:8200:8200"
+    environment:
+      - VAULT_ADDR=https://0.0.0.0:8200
+    volumes:
+      - vault-data:/vault/data
+      - vault-config:/vault/config
+      - vault-tls:/vault/tls:ro
+    command: >
+      server -config=/vault/config/vault.hcl
+
 networks:
   # quay-network:  # Uncomment if using Quay
   #   driver: bridge
@@ -141,6 +161,8 @@ networks:
   nexus-network:
     driver: bridge
   splunk-network:
+    driver: bridge
+  vault-network:
     driver: bridge
 
 volumes:
@@ -160,6 +182,11 @@ volumes:
   # Splunk volumes
   splunk-data:
   splunk-etc:
+  
+  # Vault volumes
+  vault-data:
+  vault-config:
+  vault-tls:
 
 # Environment variables to be set in .env file:
 # Option 1: If using Quay

@@ -101,6 +101,7 @@ homelab-plan/
 - **Artifact Repository**: Nexus/Artifactory
 - **Monitoring**: Prometheus + Grafana
 - **Logging**: Splunk Enterprise
+- **Secrets**: HashiCorp Vault CE (Synology)
 - **DNS**: Technitium DNS (on k8s)
 - **Load Balancing**: MetalLB + HAProxy
 
