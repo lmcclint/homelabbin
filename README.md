@@ -36,8 +36,9 @@
 
 ### Phase 5: Advanced Services
 14. **[Monitoring & Observability](./docs/14-monitoring.md)** *(TBD)* - Prometheus, Grafana, Splunk
-15. **[Security & Compliance](./docs/15-security.md)** *(TBD)* - ACS, certificates, auditing
+15. **[Secrets & Vault](./docs/15-secrets.md)** - Vault CE setup and ESO integration (plan)
 16. **[Backup & DR](./docs/16-backup-dr.md)** *(TBD)* - Backup strategies
+17. **[Object Storage (GarageHQ)](./docs/17-object-storage-garage.md)** - S3-compatible storage on Synology
 
 ## 🚀 Quick Start Deployment
 
@@ -87,7 +88,7 @@ homelab-plan/
 
 ### Infrastructure
 - **Networking**: Ubiquiti UDM SE
-- **Storage**: Synology DS1621+, Ubiquiti UNAS Pro
+- **Storage**: Synology DS1621+, Ubiquiti UNAS Pro (plus S3 via GarageHQ on Synology)
 - **Compute**: 3x Beelink S12 Pro, 5x Lenovo M710q, Dell T640
 
 ### Container Platforms

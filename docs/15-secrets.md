@@ -113,3 +113,31 @@ Operational notes
 - Firewall: restrict 8200 to admin VLAN (20) and k0s nodes if needed
 - Backups: Snapshot vault-data regularly; keep unseal shares offline
 - Migration path: Later consider moving to k0s with 3-node Raft for HA
+
+Backups & DR (Raft snapshots)
+- Snapshot creation (from host using the running container):
+  ```bash
+  # Create a snapshot inside the container
+  docker exec vault vault operator raft snapshot save /tmp/vault-raft.snap
+  # Copy it out to the host (adjust container name if needed)
+  docker cp vault:/tmp/vault-raft.snap ./backups/vault-raft-$(date +%Y%m%d%H%M).snap
+  ```
+- Store snapshots off-box (another NAS or cloud).
+- Never commit snapshots or unseal keys to git.
+
+Recovery test (recommended quarterly)
+1) Stop the production container (or perform on an isolated test host).
+2) Start a temporary Vault container with a fresh data volume.
+3) Copy a snapshot into the temp container and restore:
+   ```bash
+   docker cp ./backups/vault-raft-YYYYMMDDHHMM.snap temp_vault:/tmp/snap.snap
+   docker exec -it temp_vault sh -lc "vault operator raft snapshot restore /tmp/snap.snap"
+   ```
+4) Unseal with copies of your unseal shares.
+5) Verify policies, auth methods, and a sample secret are present.
+6) Destroy the temp instance/volume when done.
+
+Sensitive material handling
+- Unseal shares and root/recovery tokens must be kept offline (password manager + printed copy in a safe).
+- TLS private keys are never committed; they live only on the host (mounted at runtime).
+- Use policies with least privilege; avoid day-to-day use of root token.
