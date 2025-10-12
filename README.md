@@ -1,6 +1,6 @@
-# Red Hat Solution Architect Homelab
+# Homelab
 
-> A comprehensive homelab designed for Red Hat solution architects, focusing on OpenShift, Kubernetes, container technologies, and enterprise integration scenarios.
+> A comprehensive homelab for experimenting with OpenShift, Kubernetes, container technologies, and enterprise integration scenarios.
 
 ## 🎯 Project Goals
 
@@ -8,7 +8,7 @@
 - **Hybrid cloud scenarios** (bare metal + virtualized + containerized)
 - **Enterprise integration testing** (AD, SQL Server, SIEM)
 - **Customer environment replication**
-- **Red Hat certification preparation**
+- **Certification preparation**
 - **GitOps and automation workflows**
 
 ## 📋 Documentation (Priority Order)
@@ -54,7 +54,7 @@
 ./scripts/02-core-services-deploy.sh
 
 # Phase 2: Container Platform  
-./deployment/synology/docker-compose.yml  # Git repo, Harbor, Nexus
+./deployment/synology/docker-compose.yml  # Gitea, Nexus, Splunk
 ./scripts/03-storage-setup.sh
 
 # Phase 3: OpenShift
@@ -96,12 +96,12 @@ homelab-plan/
 - **vSphere**: VM workloads
 
 ### Core Services
-- **Container Registry**: Harbor
+- **Container Registry**: Nexus
 - **Git Repository**: Gitea/GitLab CE
 - **Artifact Repository**: Nexus/Artifactory
 - **Monitoring**: Prometheus + Grafana
 - **Logging**: Splunk Enterprise
-- **DNS**: CoreDNS
+- **DNS**: Technitium DNS (on k8s)
 - **Load Balancing**: MetalLB + HAProxy
 
 ## 🔐 Security Notes

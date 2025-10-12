@@ -1,6 +1,6 @@
 # Container Registry Decision Guide
 
-## Decision Matrix for Red Hat SA Homelab
+## Decision Matrix for the Homelab
 
 | Criteria | Nexus Docker | Red Hat Quay (Synology) | Red Hat Quay (OpenShift) |
 |----------|--------------|--------------------------|---------------------------|
@@ -33,7 +33,7 @@ docker-compose up nexus gitea splunk
 ```
 
 **Nexus Configuration Post-Deployment:**
-1. **Access**: http://192.168.60.11:8081
+1. **Access**: http://10.20.60.11:8081 (or http://nexus.lab.2bit.name:8081)
 2. **Add Docker Repositories**:
    - Docker (hosted): Port 8082 - your private images
    - Docker (proxy): Port 8083 - proxy to Docker Hub, Red Hat registries
@@ -55,7 +55,7 @@ spec:
   sourceNamespace: openshift-marketplace
 ```
 
-## 📋 **For Your Red Hat SA Role**
+## 📋 **For Your Lab**
 
 ### **Customer Scenarios You Can Demo:**
 

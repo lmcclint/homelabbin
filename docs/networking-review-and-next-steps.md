@@ -12,7 +12,7 @@
 - 🚧 **VLAN segmentation**: 9 new VLANs need configuration
 - 🚧 **Static IP assignments**: Management and service IPs
 - 🚧 **Inter-VLAN routing**: Firewall rules and policies
-- 🚧 **DNS infrastructure**: CoreDNS deployment and zone configuration
+- 🚧 **DNS infrastructure**: Pi-hole + Technitium on k8s (Technitium authoritative for lab.2bit.name)
 
 ## 📋 VLAN Architecture Summary
 
@@ -20,16 +20,17 @@
 |------|--------|---------|----------|---------|
 | **1** | 192.168.1.0/24 | Home network devices | Current | ✅ Active |
 | **3** | 192.168.3.0/24 | Current Beelink cluster | Current | ✅ Active |
-| **10** | 192.168.10.0/24 | Management (iDRAC, IPMI) | High | 🚧 Plan |
-| **20** | 192.168.20.0/24 | Core services (DNS, monitoring) | High | 🚧 Plan |
-| **30** | 192.168.30.0/24 | OpenShift compact cluster | Medium | 🚧 Plan |
-| **40** | 192.168.40.0/24 | OpenShift SNO + worker | Medium | 🚧 Plan |
-| **50** | 192.168.50.0/24 | Storage network (10Gbps) | High | 🚧 Plan |
-| **60** | 192.168.60.0/24 | Container services | Medium | 🚧 Plan |
-| **70** | 192.168.70.0/24 | KVM virtual machines | Low | 🚧 Plan |
-| **80** | 192.168.80.0/24 | DMZ/external services | Low | 🚧 Plan |
-| **90** | 192.168.90.0/24 | Guest/isolated | Low | 🚧 Plan |
-| **100** | 192.168.100.0/24 | Disconnected/air-gap (optional) | Future | 🔄 Option |
+| **10** | 10.20.10.0/24 | Management (UDM, IPMI/iDRAC) | High | 🚧 Plan |
+| **20** | 10.20.20.0/24 | Users/Admin (jump hosts, workstations) | High | 🚧 Plan |
+| **30** | 10.20.30.0/24 | Servers (core infra VMs) | Medium | 🚧 Plan |
+| **40** | 10.20.40.0/24 | Storage network (10Gbps) | High | 🚧 Plan |
+| **60** | 10.20.60.0/24 | Lab services (Gitea, Nexus, Splunk) | Medium | 🚧 Plan |
+| **70** | 10.20.70.0/24 | k8s/k0s nodes (Beelinks) | High | 🚧 Plan |
+| **71** | 10.20.71.0/24 | k8s/k0s LB VIPs (MetalLB) | High | 🚧 Plan |
+| **80** | 10.20.80.0/24 | IoT | Low | 🚧 Plan |
+| **90** | 10.20.90.0/24 | Guest/isolated | Low | 🚧 Plan |
+| **98** | 10.20.98.0/24 | DMZ/external services | Low | 🚧 Plan |
+| **99** | 10.20.99.0/24 | OOB (reserved) | Future | 🔄 Option |
 
 ## 🎯 Implementation Phases
 
@@ -175,21 +176,23 @@ Future Services:
 ### 1. VLAN Creation
 ```bash
 # Create VLANs in UDM SE UI
-VLAN 10: Management (192.168.10.0/24)
-VLAN 20: Core Services (192.168.20.0/24) 
-VLAN 30: OCP Compact (192.168.30.0/24)
-VLAN 40: OCP SNO (192.168.40.0/24)
-VLAN 50: Storage (192.168.50.0/24)
-VLAN 60: Containers (192.168.60.0/24)
-VLAN 70: KVM VMs (192.168.70.0/24)
-VLAN 80: DMZ (192.168.80.0/24)
-VLAN 90: Guest (192.168.90.0/24)
+VLAN 10: Management (10.20.10.0/24)
+VLAN 20: Users/Admin (10.20.20.0/24)
+VLAN 30: Servers (10.20.30.0/24)
+VLAN 40: Storage (10.20.40.0/24)
+VLAN 60: Lab Services (10.20.60.0/24)
+VLAN 70: k8s/k0s Nodes (10.20.70.0/24)
+VLAN 71: k8s/k0s LB VIPs (10.20.71.0/24)
+VLAN 80: IoT (10.20.80.0/24)
+VLAN 90: Guest (10.20.90.0/24)
+VLAN 98: DMZ (10.20.98.0/24)
+VLAN 99: OOB (10.20.99.0/24)
 ```
 
 ### 2. DHCP Configuration
 - **Static reservations** for all infrastructure devices
 - **DHCP pools** only where needed (management, VMs, guest)
-- **DNS forwarding** to CoreDNS on VLAN 20
+- **UDM DNS** → Pi-hole LB VIP (VLAN 71); Pi-hole upstream → Technitium LB VIP
 
 ### 3. Firewall Rules (Security-First Approach)
 ```
@@ -244,7 +247,7 @@ Low Priority:
 - [ ] Test basic connectivity
 - [ ] **Schedule Beelink migration window**
 - [ ] Migrate Beelink cluster: VLAN 3 → VLAN 20
-- [ ] Deploy CoreDNS with lab.local zones
+- [ ] Deploy Pi-hole + Technitium on k8s; Technitium authoritative for lab.2bit.name
 - [ ] Update democratic-csi for VLAN 50
 - [ ] Verify storage performance
 
@@ -276,7 +279,7 @@ Low Priority:
 - [ ] **Optional**: Implement disconnected network (VLAN 100 or KVM NAT)
 
 ### Disconnected Network Decision Point
-**Red Hat SA Requirement**: Need disconnected/air-gapped testing capability
+**Requirement**: Need disconnected/air-gapped testing capability
 
 **Option A: KVM NAT Networks (Recommended Start)**
 - ✅ Quick to implement

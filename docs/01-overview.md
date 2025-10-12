@@ -1,7 +1,7 @@
-# Red Hat Solution Architect Homelab Plan
+# Homelab Plan
 
 ## Overview
-This homelab supports Red Hat solution architect testing and development needs, focusing on OpenShift, Kubernetes, container technologies, and enterprise integration scenarios.
+This homelab supports testing and development needs, focusing on OpenShift, Kubernetes, container technologies, and enterprise integration scenarios.
 
 ## Hardware Allocation
 
@@ -46,7 +46,7 @@ This homelab supports Red Hat solution architect testing and development needs, 
 - Backup services
 
 ### Storage Services (Synology)
-- Container registry (Harbor)
+- Container registry (Nexus)
 - Artifact repository (Nexus/Artifactory)
 - Git repository (Gitea/GitLab CE)
 - Democratic-CSI storage provisioner
@@ -107,19 +107,22 @@ This homelab supports Red Hat solution architect testing and development needs, 
 
 ### VLAN Summary
 - **VLAN 10**: Management (IPMI, iDRAC, KVM hypervisor)
-- **VLAN 20**: Core services (DNS, monitoring, k0s cluster)
-- **VLAN 30**: OpenShift compact cluster
-- **VLAN 40**: OpenShift SNO + worker
-- **VLAN 50**: Storage network (high-speed)
-- **VLAN 60**: Container services (Harbor, Nexus, Splunk)
-- **VLAN 70**: KVM VMs (Windows, SQL, test clusters, containers)
-- **VLAN 80**: DMZ/external services
+- **VLAN 20**: Users/Admin (jump hosts, admin workstations)
+- **VLAN 30**: Servers (core infra VMs)
+- **VLAN 40**: Storage network (high-speed)
+- **VLAN 60**: Lab services (Gitea, Nexus, Splunk)
+- **VLAN 70**: k8s/k0s nodes (Beelinks)
+- **VLAN 71**: k8s/k0s Load Balancer VIPs (MetalLB)
+- **VLAN 80**: IoT
 - **VLAN 90**: Guest/isolated network
+- **VLAN 98**: DMZ/external services
+- **VLAN 99**: OOB (reserved for BMC)
 
 ### DNS Strategy
-- **Internal**: `.lab.local` domains per service
-- **External**: TBD public domain
-- **Primary DNS**: CoreDNS on core services cluster
+- **Internal**: `.lab.2bit.name` domains per service (split-horizon)
+- **External**: 2bit.name (no lab exposure initially)
+- **Primary DNS**: Technitium DNS on k8s (authoritative + recursive)
+- **Recursive/Filtering**: Pi-hole on k8s forwarding to Technitium
 
 ## Implementation Phases
 
@@ -132,7 +135,7 @@ This homelab supports Red Hat solution architect testing and development needs, 
 4. **RHEL Hypervisor Platform**: KVM/libvirt setup, Windows VMs, VM templates, Podman services
 5. **Advanced Services**: Security scanning, advanced monitoring, automation
 
-## Key Considerations for Red Hat SA Role
+## Key Considerations
 
 - Multi-cluster management with ACM
 - Hybrid cloud scenarios (bare metal + virtualized + containerized)

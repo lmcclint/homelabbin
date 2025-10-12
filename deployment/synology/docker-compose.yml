@@ -1,6 +1,6 @@
 # Synology Container Services
-# Deploy container registry (Quay OR Nexus), Gitea, Nexus, and Splunk on Synology DS1621+
-# Network: VLAN 60 (192.168.60.0/24)
+# Deploy container registry (Nexus), Gitea, and Splunk on Synology DS1621+
+# Network: VLAN 60 (10.20.60.0/24)
 #
 # Container Registry Options:
 # Option 1: Red Hat Quay (enterprise features, security scanning)
@@ -43,8 +43,8 @@ services:
   #   networks:
   #     - quay-network
   #   ports:
-  #     - "192.168.60.10:80:8080"
-  #     - "192.168.60.10:443:8443"
+  #     - "10.20.60.10:80:8080"
+  #     - "10.20.60.10:443:8443"
   #   environment:
   #     - DEBUGLOG=true
   #     - DB_URI=postgresql://quay:${QUAY_DB_PASSWORD}@quay-db:5432/quay
@@ -61,8 +61,8 @@ services:
     networks:
       - gitea-network
     ports:
-      - "192.168.60.12:3000:3000"
-      - "192.168.60.12:2222:22"
+      - "10.20.60.12:3000:3000"
+      - "10.20.60.12:2222:22"
     environment:
       - USER_UID=1000
       - USER_GID=1000
@@ -71,9 +71,9 @@ services:
       - GITEA__database__NAME=gitea
       - GITEA__database__USER=gitea
       - GITEA__database__PASSWD=${GITEA_DB_PASSWORD}
-      - GITEA__server__DOMAIN=git.lab.local
-      - GITEA__server__SSH_DOMAIN=git.lab.local
-      - GITEA__server__ROOT_URL=https://git.lab.local:3000
+      - GITEA__server__DOMAIN=git.lab.2bit.name
+      - GITEA__server__SSH_DOMAIN=git.lab.2bit.name
+      - GITEA__server__ROOT_URL=https://git.lab.2bit.name:3000
     volumes:
       - gitea-data:/data
       - /etc/timezone:/etc/timezone:ro
@@ -102,9 +102,9 @@ services:
     networks:
       - nexus-network
     ports:
-      - "192.168.60.11:8081:8081"    # Nexus UI
-      - "192.168.60.11:8082:8082"    # Docker registry (hosted)
-      - "192.168.60.11:8083:8083"    # Docker registry (proxy)
+      - "10.20.60.11:8081:8081"    # Nexus UI
+      - "10.20.60.11:8082:8082"    # Docker registry (hosted)
+      - "10.20.60.11:8083:8083"    # Docker registry (proxy)
     environment:
       - NEXUS_SECURITY_RANDOMPASSWORD=false
       - INSTALL4J_ADD_VM_PARAMS=-Xms2703m -Xmx2703m -XX:MaxDirectMemorySize=2703m
@@ -120,10 +120,10 @@ services:
     networks:
       - splunk-network
     ports:
-      - "192.168.60.15:8000:8000"   # Web UI
-      - "192.168.60.15:8088:8088"   # HTTP Event Collector
-      - "192.168.60.15:9997:9997"   # Splunk Forwarder
-      - "192.168.60.15:514:514/udp" # Syslog
+      - "10.20.60.15:8000:8000"   # Web UI
+      - "10.20.60.15:8088:8088"   # HTTP Event Collector
+      - "10.20.60.15:9997:9997"   # Splunk Forwarder
+      - "10.20.60.15:514:514/udp" # Syslog
     environment:
       - SPLUNK_START_ARGS=--accept-license
       - SPLUNK_PASSWORD=${SPLUNK_ADMIN_PASSWORD}

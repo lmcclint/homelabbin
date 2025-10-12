@@ -1,7 +1,13 @@
 # Homelab Networking Plan
 
 ## Overview
-This document outlines the network architecture for the Red Hat Solution Architect homelab, leveraging the Ubiquiti UDM SE for network management and segmentation.
+This document outlines the network architecture for the homelab, leveraging the Ubiquiti UDM SE for network management and segmentation.
+
+## Updated Plan (Authoritative)
+- Addressing: 10.20.0.0/16 for lab (home stays 192.168.1.0/24)
+- Domain: lab.2bit.name (split-horizon)
+- VLANs: 10 mgmt, 20 users, 30 servers, 40 storage, 60 lab services, 70 k8s nodes, 71 k8s LB VIPs, 80 IoT, 90 guest, 98 DMZ, 99 OOB
+- DNS: Pi-hole (first hop) → Technitium (authoritative + recursive) on k8s (Technitium PVC 10Gi, default StorageClass)
 
 ## Current State
 - **UDM SE**: Primary network management
@@ -133,7 +139,7 @@ This document outlines the network architecture for the Red Hat Solution Archite
 
 ## Disconnected Workflow Implementation Options
 
-### Option 1: Physical VLAN 100 (Recommended for Red Hat SA)
+### Option 1: Physical VLAN 100 (Production-like)
 **Best for**: Customer demos, compliance testing, true air-gap scenarios
 
 ```
@@ -183,7 +189,7 @@ Disadvantages:
    - Multi-node bare metal testing
    - Red Hat certification labs
 
-### Red Hat SA Use Cases for Disconnected Networks
+### Use Cases for Disconnected Networks
 
 - **OpenShift Disconnected Installs**: Mirror registries, air-gap procedures
 - **RHEL Satellite**: Disconnected content management
@@ -212,7 +218,7 @@ Disadvantages:
 ### DNS Strategy
 
 #### Internal DNS (.lab.2bit.name)
-- **Primary**: CoreDNS on VLAN 20
+- **Primary**: Technitium on k8s (authoritative + recursive)
 - **Base Domain**: `2bit.name` (owned domain)
 - **Lab Subdomain**: `lab.2bit.name` (internal lab services)
 - **Zones**:
