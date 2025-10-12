@@ -1,0 +1,23 @@
+# Example Vault Config (No secrets)
+# Copy this to your host path or into the container volume as /vault/config/vault.hcl
+# Replace placeholders with your real file paths for TLS. Do not commit real certs/keys.
+
+listener "tcp" {
+  address       = "0.0.0.0:8200"
+  tls_disable   = 0
+  # Placeholders below. Replace with real paths on the container (mounted read-only)
+  tls_cert_file = "/vault/tls/fullchain.pem"
+  tls_key_file  = "/vault/tls/privkey.pem"
+}
+
+storage "raft" {
+  path    = "/vault/data"
+  node_id = "vault-raft-1"
+}
+
+api_addr     = "https://vault.lab.2bit.name:8200"
+cluster_addr = "https://10.20.60.14:8201"
+
+ui = true
+
+disable_mlock = true
