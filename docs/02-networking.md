@@ -6,7 +6,7 @@ This document outlines the network architecture for the homelab, leveraging the 
 ## Updated Plan (Authoritative)
 - Addressing: 10.20.0.0/16 for lab (home stays 192.168.1.0/24)
 - Domain: lab.2bit.name (split-horizon)
-- VLANs: 10 mgmt, 20 users, 30 servers, 40 storage, 60 lab services, 70 k8s nodes, 71 k8s LB VIPs, 80 IoT, 90 guest, 98 DMZ, 99 OOB
+- VLANs: 10 mgmt, 20 core services, 30 OCP compact, 40 OCP SNO, 50 storage, 60 container services, 70 KVM VMs, 80 DMZ, 90 guest, 100 disconnected (optional), 99 OOB
 - DNS: Pi-hole (first hop) → Technitium (authoritative + recursive) on k8s (Technitium PVC 10Gi, default StorageClass)
 
 ## Current State
@@ -16,124 +16,118 @@ This document outlines the network architecture for the homelab, leveraging the 
 
 ## IP Addressing Strategy
 
-### Current Decision: 192.168.x.x vs 10.x.x.x
+### Decision: Use 10.20.0.0/16 for the lab
 
-**Recommendation: Continue with 192.168.x.x for consistency**
+**Pros of 10.x.x.x:**
+- ✅ Avoids overlap with common 192.168.x.x networks
+- ✅ Scales easily with /24 per VLAN and room to expand
+- ✅ Enterprise-aligned addressing
+- ✅ Clear separation from the home network (192.168.1.0/24)
 
-**Pros of 192.168.x.x:**
-- ✅ **Consistency** with existing home network (192.168.1.0/24)
-- ✅ **Simple management** - single addressing scheme
-- ✅ **UDM SE familiarity** - already configured for 192.168.x.x
-- ✅ **Sufficient address space** - 254 addresses per VLAN
-- ✅ **Clear separation** by VLAN ID
-
-**Cons of 192.168.x.x:**
-- ⚠️ **Limited scalability** - only 254 hosts per subnet
-- ⚠️ **Common conflicts** with other networks when traveling
-
-**Alternative: 10.x.x.x (If needed for expansion)**
-- **Lab networks**: 10.10.x.x through 10.100.x.x
-- **More addresses**: /22 or /23 subnets for large deployments
-- **Enterprise-like**: Matches many corporate environments
-- **Migration path**: Can be implemented later if growth demands
-
-**Current Plan**: Proceed with 192.168.x.x - migrate to 10.x.x.x only if hitting limitations
+**Plan:**
+- Supernet: 10.20.0.0/16
+- Per-VLAN /24s using VLAN ID as third octet (e.g., VLAN 10 → 10.20.10.0/24)
+- Migrate any remaining 192.168.x.x lab segments during maintenance windows
 
 ## Proposed VLAN Architecture
 
 ### VLAN 10 - Management Network
-- **Subnet**: 192.168.10.0/24
+- **Subnet**: 10.20.10.0/24
 - **Purpose**: Out-of-band management, iDRAC, hypervisor management
+- **Access**: Restricted to Admin Jumpbox/VPN only
 - **Devices**:
-  - Dell T640 iDRAC: 192.168.10.10
-  - Dell T640 RHEL management: 192.168.10.11
-  - Synology management: 192.168.10.20
-  - UNAS Pro management: 192.168.10.21
-  - Cockpit/libvirt management: 192.168.10.100
+  - Dell T640 iDRAC: 10.20.10.10
+  - Dell T640 RHEL management: 10.20.10.11
+  - Synology management: 10.20.10.20
+  - UNAS Pro management: 10.20.10.21
+  - Cockpit/libvirt management: 10.20.10.100
 - **Note**: M710q machines have no IPMI - managed via primary NICs on their respective VLANs
 
-### VLAN 20 - Core Infrastructure Services
-- **Subnet**: 192.168.20.0/24
-- **Purpose**: DNS, IPAM, monitoring, certificates, load balancers
+### VLAN 20 - Core Infrastructure Services (Mgmt Cluster)
+- **Subnet**: 10.20.20.0/24
+- **Purpose**: Dedicated Management Cluster (Beelinks) running DNS, IPAM, Monitoring. No generic workloads.
 - **Devices**:
-  - Beelink k0s cluster: 192.168.20.11-13
-  - DNS servers (CoreDNS): 192.168.20.53, 192.168.20.54
-  - IPAM (phpIPAM/NetBox): 192.168.20.80
-  - Monitoring stack: 192.168.20.90-99
-  - MetalLB pool: 192.168.20.200-220
+  - Beelink k0s cluster nodes: 10.20.20.11-13
+  - DNS servers (CoreDNS/Technitium VIP): 10.20.20.53, 10.20.20.54
+  - IPAM (phpIPAM or NetBox): 10.20.20.80
+  - Monitoring stack: 10.20.20.90-99
+  - MetalLB pool: 10.20.20.200-220
 
 ### VLAN 30 - OpenShift Compact Cluster
-- **Subnet**: 192.168.30.0/24
+- **Subnet**: 10.20.30.0/24
 - **Purpose**: Production-like 3-node OpenShift cluster
 - **Devices**:
-  - OCP nodes: 192.168.30.11-13
-  - API/Ingress VIP: 192.168.30.100
-  - Apps wildcard: *.apps.ocp-compact.lab.2bit.name → 192.168.30.101
-  - ACM console: 192.168.30.110
+  - OCP nodes: 10.20.30.11-13
+  - API/Ingress VIP: 10.20.30.100
+  - Apps wildcard: *.apps.ocp-compact.lab.2bit.name → 10.20.30.101
+  - ACM console: 10.20.30.110
 
 ### VLAN 40 - OpenShift SNO + Worker
-- **Subnet**: 192.168.40.0/24
+- **Subnet**: 10.20.40.0/24
 - **Purpose**: Single Node OpenShift + worker testing
 - **Devices**:
-  - SNO node: 192.168.40.11
-  - Worker node: 192.168.40.12
-  - API/Ingress VIP: 192.168.40.100
-  - Apps wildcard: *.apps.ocp-sno.lab.2bit.name → 192.168.40.101
+  - SNO node: 10.20.40.11
+  - Worker node: 10.20.40.12
+  - API/Ingress VIP: 10.20.40.100
+  - Apps wildcard: *.apps.ocp-sno.lab.2bit.name → 10.20.40.101
 
 ### VLAN 50 - Storage Network
-- **Subnet**: 192.168.50.0/24
-- **Purpose**: High-speed storage traffic, NFS, iSCSI
+- **Subnet**: 10.20.50.0/24
+- **Purpose**: High-speed storage traffic (NFS, iSCSI). Layer 2 ONLY.
+- **Routing**: **NO GATEWAY**. Isolated traffic.
+- **MTU**: 9000 (Jumbo Frames) - Must be enabled end-to-end.
+- **Strategy**: Multi-homed. Compute nodes have a dedicated virtual/physical interface on this VLAN.
 - **Devices**:
-  - Synology storage IP: 192.168.50.20
-  - UNAS Pro storage IP: 192.168.50.21
-  - Democratic-CSI endpoints: 192.168.50.30-39
-  - KVM storage network: 192.168.50.100-109
+  - Synology storage IP: 10.20.50.20
+  - UNAS Pro storage IP: 10.20.50.21
+  - Democratic-CSI endpoints: 10.20.50.30-39
+  - KVM storage network: 10.20.50.100-109
 
 ### VLAN 60 - Container Services
-- **Subnet**: 192.168.60.0/24
+- **Subnet**: 10.20.60.0/24
 - **Purpose**: Harbor, Nexus, GitLab, Splunk (if on Synology)
 - **Devices**:
-  - Harbor registry: 192.168.60.10
-  - Nexus repository: 192.168.60.11
-  - GitLab/Gitea: 192.168.60.12
-  - Splunk: 192.168.60.15
-  - Quay registry: 192.168.60.20
+  - Harbor registry: 10.20.60.10
+  - Nexus repository: 10.20.60.11
+  - GitLab/Gitea: 10.20.60.12
+  - Splunk: 10.20.60.15
+  - Quay registry: 10.20.60.20
 
 ### VLAN 70 - KVM Virtual Machines
-- **Subnet**: 192.168.70.0/24
-- **Purpose**: KVM/libvirt VMs on Dell T640 RHEL hypervisor
+- **Subnet**: 10.20.70.0/24
+- **Purpose**: General purpose Compute/VMs on Dell T640 RHEL hypervisor.
 - **Devices**:
-  - Windows Server (AD): 192.168.70.10
-  - SQL Server VMs: 192.168.70.20-29
-  - RHEL VMs: 192.168.70.30-39
-  - Test k8s clusters: 192.168.70.40-49
-  - Client VMs: 192.168.70.100-199
-  - Nested ESXi VMs (testing): 192.168.70.200-209
+  - Windows Server (AD): 10.20.70.10
+  - SQL Server VMs: 10.20.70.20-29
+  - RHEL VMs: 10.20.70.30-39
+  - Test k8s clusters: 10.20.70.40-49
+  - Client VMs: 10.20.70.100-199
+  - Nested ESXi VMs (testing): 10.20.70.200-209
 
 ### VLAN 80 - DMZ/External Services
-- **Subnet**: 192.168.80.0/24
+- **Subnet**: 10.20.80.0/24
 - **Purpose**: Externally accessible services, reverse proxy
 - **Devices**:
-  - Reverse proxy/HAProxy: 192.168.80.10
-  - External DNS: 192.168.80.53
-  - VPN endpoints: 192.168.80.100-109
-  - Public service endpoints: 192.168.80.200-220
+  - Reverse proxy/HAProxy: 10.20.80.10
+  - External DNS: 10.20.80.53
+  - VPN endpoints: 10.20.80.100-109
+  - Public service endpoints: 10.20.80.200-220
 
 ### VLAN 90 - Guest/Isolated
-- **Subnet**: 192.168.90.0/24
+- **Subnet**: 10.20.90.0/24
 - **Purpose**: Guest access, isolated testing
 - **Devices**:
-  - Guest devices: DHCP pool 192.168.90.100-199
-  - Isolated test environments: 192.168.90.200-254
+  - Guest devices: DHCP pool 10.20.90.100-199
+  - Isolated test environments: 10.20.90.200-254
 
 ### VLAN 100 - Disconnected/Air-Gapped Network (Optional)
-- **Subnet**: 192.168.100.0/24
+- **Subnet**: 10.20.100.0/24
 - **Purpose**: Disconnected workflows, air-gapped testing, compliance scenarios
 - **Devices**:
-  - Disconnected OpenShift cluster: 192.168.100.11-13
-  - Local registries: 192.168.100.20-29
-  - Internal DNS/DHCP: 192.168.100.53
-  - Test workloads: 192.168.100.100-199
+  - Disconnected OpenShift cluster: 10.20.100.11-13
+  - Local registries: 10.20.100.20-29
+  - Internal DNS/DHCP: 10.20.100.53
+  - Test workloads: 10.20.100.100-199
 - **Features**: No internet access, internal-only registry and services
 - **Alternative**: Can be implemented via KVM NAT networks or isolated VMs
 
@@ -253,10 +247,10 @@ Disadvantages:
 ## Load Balancing Strategy
 
 ### MetalLB Configuration
-- **Core Services Pool**: 192.168.20.200-220
-- **OpenShift Compact Pool**: 192.168.30.200-220
-- **OpenShift SNO Pool**: 192.168.40.200-220
-- **Container Services Pool**: 192.168.60.200-220
+- **Core Services Pool**: 10.20.20.200-220
+- **OpenShift Compact Pool**: 10.20.30.200-220
+- **OpenShift SNO Pool**: 10.20.40.200-220
+- **Container Services Pool**: 10.20.60.200-220
 
 ### HAProxy/Nginx Reverse Proxy
 - **Location**: VLAN 80 (DMZ)
@@ -266,11 +260,11 @@ Disadvantages:
 ## Network Services
 
 ### DHCP Pools
-- **Management**: 192.168.10.150-199 (temporary access)
-- **Core Services**: 192.168.20.150-199 (DHCP reservations)
+- **Management**: 10.20.10.150-199 (temporary access)
+- **Core Services**: 10.20.20.150-199 (DHCP reservations)
 - **OpenShift networks**: Static IPs only
-- **KVM VMs**: 192.168.70.100-199
-- **Guest**: 192.168.90.100-199
+- **KVM VMs**: 10.20.70.100-199
+- **Guest**: 10.20.90.100-199
 
 ### NTP
 - **Primary**: Core services cluster (VLAN 20)

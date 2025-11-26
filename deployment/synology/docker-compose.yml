@@ -16,7 +16,7 @@ services:
   #   container_name: quay-redis
   #   restart: unless-stopped
   #   networks:
-  #     - quay-network
+  #     - backend
   #   volumes:
   #     - quay-redis-data:/data
   #
@@ -25,7 +25,7 @@ services:
   #   container_name: quay-db
   #   restart: unless-stopped
   #   networks:
-  #     - quay-network
+  #     - backend
   #   environment:
   #     - POSTGRES_USER=quay
   #     - POSTGRES_PASSWORD=${QUAY_DB_PASSWORD}
@@ -41,10 +41,12 @@ services:
   #     - quay-db
   #     - quay-redis
   #   networks:
-  #     - quay-network
-  #   ports:
-  #     - "10.20.60.10:80:8080"
-  #     - "10.20.60.10:443:8443"
+  #     backend:
+  #     vlan60:
+  #       ipv4_address: 10.20.60.10
+  #   # ports:
+  #   #   - "80:8080"
+  #   #   - "443:8443"
   #   environment:
   #     - DEBUGLOG=true
   #     - DB_URI=postgresql://quay:${QUAY_DB_PASSWORD}@quay-db:5432/quay
@@ -59,10 +61,12 @@ services:
     container_name: gitea
     restart: unless-stopped
     networks:
-      - gitea-network
-    ports:
-      - "10.20.60.12:3000:3000"
-      - "10.20.60.12:2222:22"
+      backend:
+      vlan60:
+        ipv4_address: 10.20.60.12
+    # ports:
+    #   - "3000:3000"
+    #   - "2222:22"
     environment:
       - USER_UID=1000
       - USER_GID=1000
@@ -86,7 +90,7 @@ services:
     container_name: gitea-db
     restart: unless-stopped
     networks:
-      - gitea-network
+      backend:
     environment:
       - POSTGRES_USER=gitea
       - POSTGRES_PASSWORD=${GITEA_DB_PASSWORD}
@@ -100,11 +104,12 @@ services:
     container_name: nexus
     restart: unless-stopped
     networks:
-      - nexus-network
-    ports:
-      - "10.20.60.11:8081:8081"    # Nexus UI
-      - "10.20.60.11:8082:8082"    # Docker registry (hosted)
-      - "10.20.60.11:8083:8083"    # Docker registry (proxy)
+      vlan60:
+        ipv4_address: 10.20.60.11
+    # ports:
+    #   - "8081:8081"    # Nexus UI
+    #   - "8082:8082"    # Docker registry (hosted)
+    #   - "8083:8083"    # Docker registry (proxy)
     environment:
       - NEXUS_SECURITY_RANDOMPASSWORD=false
       - INSTALL4J_ADD_VM_PARAMS=-Xms2703m -Xmx2703m -XX:MaxDirectMemorySize=2703m
@@ -118,12 +123,13 @@ services:
     container_name: splunk
     restart: unless-stopped
     networks:
-      - splunk-network
-    ports:
-      - "10.20.60.15:8000:8000"   # Web UI
-      - "10.20.60.15:8088:8088"   # HTTP Event Collector
-      - "10.20.60.15:9997:9997"   # Splunk Forwarder
-      - "10.20.60.15:514:514/udp" # Syslog
+      vlan60:
+        ipv4_address: 10.20.60.15
+    # ports:
+    #   - "8000:8000"   # Web UI
+    #   - "8088:8088"   # HTTP Event Collector
+    #   - "9997:9997"   # Splunk Forwarder
+    #   - "514:514/udp" # Syslog
     environment:
       - SPLUNK_START_ARGS=--accept-license
       - SPLUNK_PASSWORD=${SPLUNK_ADMIN_PASSWORD}
@@ -141,9 +147,10 @@ services:
     cap_add:
       - IPC_LOCK
     networks:
-      - vault-network
-    ports:
-      - "10.20.60.14:8200:8200"
+      vlan60:
+        ipv4_address: 10.20.60.14
+    # ports:
+    #   - "8200:8200"
     environment:
       - VAULT_ADDR=https://0.0.0.0:8200
     volumes:
@@ -154,16 +161,16 @@ services:
       server -config=/vault/config/vault.hcl
 
 networks:
-  # quay-network:  # Uncomment if using Quay
-  #   driver: bridge
-  gitea-network:
+  backend:
     driver: bridge
-  nexus-network:
-    driver: bridge
-  splunk-network:
-    driver: bridge
-  vault-network:
-    driver: bridge
+  vlan60:
+    driver: macvlan
+    driver_opts:
+      parent: ${SYNOLOGY_INTERFACE:-eth0.60}
+    ipam:
+      config:
+        - subnet: 10.20.60.0/24
+          gateway: 10.20.60.1
 
 volumes:
   # Quay volumes (uncomment if using Quay)
