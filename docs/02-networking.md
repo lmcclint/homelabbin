@@ -51,7 +51,7 @@ This document outlines the network architecture for the homelab, leveraging the 
   - DNS servers (CoreDNS/Technitium VIP): 10.20.20.53, 10.20.20.54
   - IPAM (phpIPAM or NetBox): 10.20.20.80
   - Monitoring stack: 10.20.20.90-99
-  - MetalLB pool: 10.20.20.200-220
+-  - MetalLB pool: 10.20.20.200-254
 
 ### VLAN 30 - OpenShift Compact Cluster
 - **Subnet**: 10.20.30.0/24
@@ -91,7 +91,8 @@ This document outlines the network architecture for the homelab, leveraging the 
   - Nexus repository: 10.20.60.11
   - GitLab/Gitea: 10.20.60.12
   - Splunk: 10.20.60.15
-  - Quay registry: 10.20.60.20
+-  - Quay registry: 10.20.60.20
+-  - MetalLB pool: 10.20.60.200-254
 
 ### VLAN 70 - KVM Virtual Machines
 - **Subnet**: 10.20.70.0/24
@@ -247,10 +248,40 @@ Disadvantages:
 ## Load Balancing Strategy
 
 ### MetalLB Configuration
-- **Core Services Pool**: 10.20.20.200-220
+- **Core Services Pool**: 10.20.20.200-254
 - **OpenShift Compact Pool**: 10.20.30.200-220
 - **OpenShift SNO Pool**: 10.20.40.200-220
-- **Container Services Pool**: 10.20.60.200-220
+- **Container Services Pool**: 10.20.60.200-254
+
+## Addressing & IP Assignment Policy
+
+### General Rules
+- Use DHCP reservations for host management NICs on VLAN 10; keep IPAM as source of truth.
+- Do not use DHCP on VLAN 50 (Storage). Assign static IPs only and configure no default gateway.
+- Reserve the tail of each /24 for load balancer VIPs; avoid overlap with DHCP scopes.
+- Only one default gateway per multi-homed host (typically on VLAN 10 for hosts, 60 for Synology services).
+
+### Per-VLAN Policy
+- VLAN 10 (Management):
+  - Gateway: 10.20.10.1
+  - Static: .10–.99 for appliances (UDM, IPMI/DRAC, DSM)
+  - DHCP: .100–.199 (use reservations for hosts)
+  - VIPs: none
+- VLAN 20 (Core/Infra):
+  - Gateway: 10.20.20.1
+  - Static: .10–.99 for DNS/IPAM/monitoring
+  - DHCP: .100–.199 (optional)
+  - MetalLB VIP pool: 10.20.20.200–10.20.20.254
+- VLAN 50 (Storage):
+  - Gateway: none
+  - Static only; NAS and host storage NICs
+  - Jumbo MTU end-to-end
+  - No VIPs
+- VLAN 60 (Services):
+  - Gateway: 10.20.60.1
+  - Static: .10–.99 for pinned service IPs (if needed)
+  - DHCP: .100–.199 for app/VM addresses (prefer reservations)
+  - MetalLB VIP pool: 10.20.60.200–10.20.60.254
 
 ### HAProxy/Nginx Reverse Proxy
 - **Location**: VLAN 80 (DMZ)
