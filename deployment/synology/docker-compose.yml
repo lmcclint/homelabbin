@@ -10,6 +10,25 @@
 version: '3.8'
 
 services:
+  # Caddy reverse proxy (optional; enable with profile 'edge' or run the split stack in deployment/synology/caddy)
+  caddy:
+    profiles: ["edge"]
+    build: ./caddy
+    container_name: caddy
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+      - ACME_EMAIL=${ACME_EMAIL}
+      - PORKBUN_API_KEY=${PORKBUN_API_KEY}
+      - PORKBUN_API_SECRET_KEY=${PORKBUN_API_SECRET_KEY}
+    networks:
+      vlan60:
+        ipv4_address: ${CADDY_IP:-10.20.60.10}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/data:/data
+      - ./caddy/config:/config
+
   # Option 1: Red Hat Quay (Uncomment to use)
   # quay-redis:
   #   image: redis:7-alpine
@@ -128,8 +147,8 @@ networks:
       parent: ${SYNOLOGY_INTERFACE:-eth0.60}
     ipam:
       config:
-        - subnet: 10.20.60.0/24
-          gateway: 10.20.60.1
+        - subnet: ${VLAN60_SUBNET:-10.20.60.0/24}
+          gateway: ${VLAN60_GATEWAY:-10.20.60.1}
 
 volumes:
   # Quay volumes (uncomment if using Quay)
@@ -151,6 +170,18 @@ volumes:
   vault-tls:
 
 # Environment variables to be set in .env file:
+# Network
+# SYNOLOGY_INTERFACE=eth0.60
+# VLAN60_SUBNET=10.20.60.0/24
+# VLAN60_GATEWAY=10.20.60.1
+# CADDY_IP=10.20.60.10
+# TZ=America/Los_Angeles
+#
+# Caddy (ACME via Porkbun)
+# ACME_EMAIL=you@2bit.name
+# PORKBUN_API_KEY=<porkbun_api_key>
+# PORKBUN_API_SECRET_KEY=<porkbun_api_secret>
+#
 # Option 1: If using Quay
 # QUAY_DB_PASSWORD=<secure_password>
 #
@@ -161,4 +192,3 @@ volumes:
 # GITEA_DB_PASSWORD=<secure_password>
 # SPLUNK_ADMIN_PASSWORD=<secure_password>
 # SPLUNK_HEC_TOKEN=<random_uuid>
-

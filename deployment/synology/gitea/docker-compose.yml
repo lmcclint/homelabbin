@@ -36,10 +36,9 @@ services:
       - GITEA__database__NAME=${GITEA_DB_NAME:-gitea}
       - GITEA__database__USER=${GITEA_DB_USER:-gitea}
       - GITEA__database__PASSWD=${GITEA_DB_PASSWORD}
-      # Uncomment and set these when putting behind reverse proxy (Caddy) later
-      # - GITEA__server__DOMAIN=${GITEA_DOMAIN}
-      # - GITEA__server__SSH_DOMAIN=${GITEA_SSH_DOMAIN}
-      # - GITEA__server__ROOT_URL=${GITEA_ROOT_URL}
+      - GITEA__server__DOMAIN=${GITEA_DOMAIN}
+      - GITEA__server__SSH_DOMAIN=${GITEA_SSH_DOMAIN}
+      - GITEA__server__ROOT_URL=${GITEA_ROOT_URL}
     volumes:
       - ${GITEA_DATA:-./gitea}:/data
       - /etc/timezone:/etc/timezone:ro
