@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  caddy:
+    image: caddy:2.8
+    container_name: caddy
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${CADDY_DATA:-./data}:/data
+      - ${CADDY_CONFIG:-./config}:/config
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    networks:
+      vlan60:
+        ipv4_address: ${CADDY_IP:-10.20.60.10}
+
+networks:
+  vlan60:
+    driver: macvlan
+    driver_opts:
+      parent: ${SYNOLOGY_INTERFACE:-eth0.60}
+    ipam:
+      config:
+        - subnet: ${VLAN60_SUBNET:-10.20.60.0/24}
+          gateway: ${VLAN60_GATEWAY:-10.20.60.1}
