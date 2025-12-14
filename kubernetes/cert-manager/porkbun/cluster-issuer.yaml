@@ -1,0 +1,22 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: le-dns-porkbun
+spec:
+  acme:
+    email: you@2bit.name
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: le-account-key
+    solvers:
+    - dns01:
+        webhook:
+          groupName: acme.porkbun
+          solverName: porkbun
+          config:
+            apiKeySecretRef:
+              name: porkbun-credentials
+              key: api-key
+            secretApiKeySecretRef:
+              name: porkbun-credentials
+              key: secret-api-key

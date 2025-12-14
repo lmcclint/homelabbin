@@ -2,11 +2,14 @@ version: "3.8"
 
 services:
   caddy:
-    image: caddy:2.8
+    build: .
     container_name: caddy
     restart: unless-stopped
     environment:
       - TZ=${TZ}
+      - ACME_EMAIL=${ACME_EMAIL}
+      - PORKBUN_API_KEY=${PORKBUN_API_KEY}
+      - PORKBUN_API_SECRET_KEY=${PORKBUN_API_SECRET_KEY}
     volumes:
       - ${CADDY_DATA:-./data}:/data
       - ${CADDY_CONFIG:-./config}:/config
