@@ -1,5 +1,8 @@
 # Caddy reverse proxy (Synology, macvlan)
 
+
+Test host
+- Add DNS A: whoami.lab.2bit.name -> CADDY_IP, then visit https://whoami.lab.2bit.name to verify TLS and routing.
 Fronts Gitea (and later other services) with a single entrypoint and TLS.
 
 ## Why use a reverse proxy instead of ports per app?

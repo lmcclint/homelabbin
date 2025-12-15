@@ -24,10 +24,19 @@ services:
     networks:
       vlan60:
         ipv4_address: ${CADDY_IP:-10.20.60.10}
+      backend:
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./caddy/data:/data
       - ./caddy/config:/config
+
+  whoami:
+    profiles: ["edge"]
+    image: traefik/whoami:latest
+    container_name: caddy-whoami
+    restart: unless-stopped
+    networks:
+      - backend
 
   # Option 1: Red Hat Quay (Uncomment to use)
   # quay-redis:

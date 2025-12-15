@@ -24,6 +24,11 @@
 		reverse_proxy http://{$GITEA_UPSTREAM_HTTP_ADDR:-10.20.60.11}:3000
 	}
 
+	@whoami host whoami.lab.2bit.name
+	handle @whoami {
+		reverse_proxy http://whoami:80
+	}
+
 	# default 404 for unknown hosts under the wildcard
 	respond 404
 }

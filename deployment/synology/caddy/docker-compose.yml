@@ -17,6 +17,14 @@ services:
     networks:
       vlan60:
         ipv4_address: ${CADDY_IP:-10.20.60.10}
+      caddy-internal:
+
+  whoami:
+    image: traefik/whoami:latest
+    container_name: caddy-whoami
+    restart: unless-stopped
+    networks:
+      - caddy-internal
 
 networks:
   vlan60:
@@ -27,3 +35,5 @@ networks:
       config:
         - subnet: ${VLAN60_SUBNET:-10.20.60.0/24}
           gateway: ${VLAN60_GATEWAY:-10.20.60.1}
+  caddy-internal:
+    driver: bridge
