@@ -1,17 +1,21 @@
 # Lab Network — As-Built Record
 
-_Last updated: 2026-06-05 (Task 0 baseline)_
+_Last updated: 2026-06-06 (Task 1)_
 
 ## Networks (UDM SE)
 
-| VLAN | Name | Subnet | Gateway | DHCP | Notes |
-|---|---|---|---|---|---|
-| 1 | Default | 192.168.1.0/24 | .1 | server | Home/family devices |
-| 3 | 3Link | 192.168.3.0/24 | .1 | server | Legacy Beelink home — to retire |
-| 10 | lab-mgmt | 10.20.10.0/24 | .1 | server | iDRAC, DSM mgmt, switch mgmt |
-| 20 | lab-core | 10.20.20.0/24 | .1 | server | Beelink nodes + MetalLB VIPs |
-| 50 | lab-stor | 10.20.50.0/24 | .1 | server | Left as-is; future storage net |
-| 60 | lab-cntr | 10.20.60.0/24 | .1 | server | Synology macvlan services |
+DHCP scope `.100–.199` on lab VLANs; `.11–.99` reserved for static hosts;
+`.53–.54` + `.200–.254` reserved for MetalLB VIPs. Domain `lab.2bit.name` set on
+lab VLANs (10/20/50/60); home + bypass left without a lab suffix.
+
+| VLAN | Name | Subnet | Gateway | DHCP | Domain | Notes |
+|---|---|---|---|---|---|---|
+| 1 | Default | 192.168.1.0/24 | .1 | server (existing) | — | Home/family devices |
+| 3 | 3Link | 192.168.3.0/24 | .1 | server | — | Legacy Beelink home — to retire |
+| 10 | lab-mgmt | 10.20.10.0/24 | .1 | .100–.199 | lab.2bit.name | iDRAC, DSM mgmt, switch mgmt |
+| 20 | lab-core | 10.20.20.0/24 | .1 | .100–.199 | lab.2bit.name | Beelink nodes + MetalLB VIPs |
+| 50 | lab-stor | 10.20.50.0/24 | .1 | server | lab.2bit.name | Left as-is; future storage net |
+| 60 | lab-cntr | 10.20.60.0/24 | .1 | .100–.199 | lab.2bit.name | Synology macvlan services |
 
 ## Firewall (inter-VLAN)
 - (none recorded yet)
