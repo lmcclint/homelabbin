@@ -228,7 +228,9 @@ All steps are done in the UniFi UI (no automation this phase).
 
 ## Open Items / Deferred
 
-- k0s vs k3s platform choice (next discussion; does not affect addressing).
+- ~~k0s vs k3s platform choice~~ **Resolved 2026-06-05: k3s** (3-node HA with
+  embedded etcd; chosen for community/docs depth and stable-and-boring fit; OpenShift
+  covers vanilla/enterprise reps elsewhere). Gates Plan 2 (cluster + DNS).
 - Plex on cluster with N100 iGPU QuickSync transcoding (feasibility + Intel GPU device
   plugin) — separate design.
 - Storage VLAN 50 L2-only + jumbo-frame build-out, for M710q/T640 multi-homing (later phase).
