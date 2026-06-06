@@ -1,6 +1,6 @@
 # Lab Network — As-Built Record
 
-_Last updated: 2026-06-06 (Task 1)_
+_Last updated: 2026-06-06 (Task 2)_
 
 ## Networks (UDM SE)
 
@@ -18,7 +18,9 @@ lab VLANs (10/20/50/60); home + bypass left without a lab suffix.
 | 60 | lab-cntr | 10.20.60.0/24 | .1 | .100–.199 | lab.2bit.name | Synology macvlan services |
 
 ## Firewall (inter-VLAN)
-- (none recorded yet)
+- **Flat by design (starter phase).** No custom block/allow rules; UniFi's default
+  inter-VLAN routing is left permissive, so home VLAN 1 reaches lab VLANs directly.
+  Deliberate convenience choice — revisit/segment later if needed.
 
 ## SSIDs
 - (none recorded yet)
