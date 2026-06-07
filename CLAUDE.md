@@ -13,7 +13,7 @@ This is a comprehensive homelab infrastructure-as-code project for testing, deve
 ### Hardware Layout
 
 - **Synology DS1621+**: Container services on VLAN 60 via Docker Compose (Nexus, Gitea, Vault, Splunk, Caddy)
-- **3x Beelink S12 Pro**: k0s cluster for core infrastructure services (VLAN 20) - DNS, IPAM, monitoring
+- **3x Beelink S12 Pro**: k3s cluster for core infrastructure services (VLAN 20) - DNS, IPAM, monitoring
 - **5x Lenovo M710q**: Split into two OpenShift clusters
   - 3-node compact cluster (VLAN 30) - ACM hub
   - SNO + worker (VLAN 40) - ACM spoke
@@ -25,7 +25,7 @@ This is a comprehensive homelab infrastructure-as-code project for testing, deve
 
 **Key VLANs**:
 - VLAN 10: Management (iDRAC, Cockpit, IPMI)
-- VLAN 20: Core services cluster (k0s, DNS, monitoring)
+- VLAN 20: Core services cluster (k3s, DNS, monitoring)
 - VLAN 30: OpenShift compact cluster
 - VLAN 40: OpenShift SNO + worker
 - VLAN 50: Storage network (Layer 2 only, no gateway, MTU 9000)
@@ -37,7 +37,7 @@ This is a comprehensive homelab infrastructure-as-code project for testing, deve
 
 **DNS Strategy**:
 - Domain: `lab.2bit.name` (subdomain of owned domain `2bit.name`)
-- Split-horizon DNS with Technitium (authoritative + recursive) on k0s
+- Split-horizon DNS with Technitium (authoritative + recursive) on k3s
 - Valid SSL certificates via Let's Encrypt + Porkbun DNS-01 ACME
 - No .local domains (avoids mDNS conflicts and certificate issues)
 
@@ -76,7 +76,7 @@ Caddy provides centralized TLS termination and routing:
 
 - **Placement**: Synology Docker, single-node Raft storage
 - **TLS**: Always enabled (self-signed or internal CA)
-- **Integration plan**: External Secrets Operator (ESO) for k0s cluster
+- **Integration plan**: External Secrets Operator (ESO) for k3s cluster
 - **Auth methods**: Kubernetes (for ESO), userpass, approle
 - **Paths**: `secret/gitea/db`, `secret/nexus/admin`, etc.
 
@@ -240,7 +240,7 @@ Caddy Caddyfile routes `@git` matcher to `http://10.20.60.11:3000` (or `GITEA_UP
 
 ### Vault + ESO Integration (Planned)
 
-When implementing External Secrets Operator on k0s:
+When implementing External Secrets Operator on k3s:
 
 1. Enable Kubernetes auth in Vault with k8s API address and CA
 2. Create role mapping ServiceAccount to policy `eso-read`
@@ -275,8 +275,8 @@ Avoid conflicts when assigning static IPs.
 - GarageHQ S3 storage deployment
 
 **Planned**:
-- k0s cluster deployment on Beelink nodes (VLAN 20)
-- Technitium DNS and Pi-hole on k0s
+- k3s cluster deployment on Beelink nodes (VLAN 20)
+- Technitium DNS and Pi-hole on k3s
 - OpenShift compact cluster installation (VLAN 30)
 - OpenShift SNO + worker cluster (VLAN 40)
 - ACM hub/spoke configuration

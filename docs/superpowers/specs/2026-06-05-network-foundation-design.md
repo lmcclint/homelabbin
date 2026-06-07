@@ -234,6 +234,10 @@ All steps are done in the UniFi UI (no automation this phase).
 - Plex on cluster with N100 iGPU QuickSync transcoding (feasibility + Intel GPU device
   plugin) — separate design.
 - Storage VLAN 50 L2-only + jumbo-frame build-out, for M710q/T640 multi-homing (later phase).
+- **Disconnected VLAN 100 build-out** (later phase): for testing "remote" /
+  disconnected/air-gapped software installs (OpenShift disconnected, Satellite,
+  compliance demos). Reserved on paper now; physical VLAN vs KVM-NAT path to be
+  decided when it's actually needed. Nothing planned on it yet — noted so it isn't lost.
 - Config-as-code for the UDM (Ansible `kenmoini.unifi_network`) — optional, if manual
   upkeep ever becomes painful.
 - phpIPAM/NetBox as eventual source of truth (replaces the interim table here).

@@ -46,7 +46,7 @@ Initialize & unseal (once)
 - Store initial root token offline; create an admin user + policy, then avoid using root
 
 Auth methods (enable)
-- kubernetes (for k0s workloads via External Secrets Operator)
+- kubernetes (for k3s workloads via External Secrets Operator)
 - userpass (admin/testing)
 - approle (non-human services off-cluster)
 
@@ -62,7 +62,7 @@ Key/Value engine
   - secret/splunk/admin: { password }
   - secret/k8s/registry: { username, password }
 
-Kubernetes integration (later, on k0s)
+Kubernetes integration (later, on k3s)
 - Install External Secrets Operator
 - In Vault, configure kubernetes auth:
   - Set k8s API address and CA
@@ -110,9 +110,9 @@ spec:
 ```
 
 Operational notes
-- Firewall: restrict 8200 to admin VLAN (20) and k0s nodes if needed
+- Firewall: restrict 8200 to admin VLAN (20) and k3s nodes if needed
 - Backups: Snapshot vault-data regularly; keep unseal shares offline
-- Migration path: Later consider moving to k0s with 3-node Raft for HA
+- Migration path: Later consider moving to k3s with 3-node Raft for HA
 
 Backups & DR (Raft snapshots)
 - Snapshot creation (from host using the running container):

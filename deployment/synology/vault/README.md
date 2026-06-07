@@ -52,4 +52,4 @@ Initialization checklist (do this once)
 Security notes
 - .gitignore already excludes *.pem, *.key, .env, etc.
 - Do not commit vault.hcl with real paths or any tokens; keep host-specific overrides in docker-compose.override.yml.
-- Restrict access to 8200 in the UDM firewall to admin VLAN and k0s nodes as needed.
+- Restrict access to 8200 in the UDM firewall to admin VLAN and k3s nodes as needed.

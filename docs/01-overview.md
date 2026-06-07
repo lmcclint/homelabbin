@@ -17,7 +17,7 @@ This homelab supports testing and development needs, focusing on OpenShift, Kube
 
 ### Compute Infrastructure
 - **3x Beelink S12 Pro** (16GB RAM, 4 CPU each)
-  - k0s cluster for core infrastructure services
+  - k3s cluster (3-node HA, embedded etcd) for core infrastructure services
   - High availability for critical services
   
 - **5x Lenovo M710q** - Split into two OpenShift clusters:
@@ -37,13 +37,14 @@ This homelab supports testing and development needs, focusing on OpenShift, Kube
 
 ## Service Distribution
 
-### Core Services Cluster (k0s on Beelinks)
-- DNS (CoreDNS + external-dns)
-- IPAM (phpIPAM or NetBox)
+### Core Services Cluster (k3s on Beelinks — VLAN 20)
+- DNS: Pi-hole (client-facing filtering, VIP `10.20.20.53`) + Technitium
+  (authoritative split-horizon + recursive, VIP `10.20.20.54`)
+- Load balancing (MetalLB, L2/ARP mode)
 - Certificate management (cert-manager)
 - Monitoring (Prometheus + Grafana)
-- Load balancing (MetalLB)
-- Backup services
+- IPAM (phpIPAM or NetBox) — later
+- Plex (if N100 iGPU QuickSync transcoding pans out)
 
 ### Storage Services (Synology)
 - Container registry (Nexus)
@@ -104,26 +105,29 @@ This homelab supports testing and development needs, focusing on OpenShift, Kube
 
 ## Network Design
 
-> **Detailed networking plan**: See [02-networking.md](./02-networking.md)
+> **Detailed networking plan**: See [02-networking.md](./02-networking.md) and the
+> authoritative design spec + as-built record it references.
 
 ### VLAN Summary
-- **VLAN 10**: Management (IPMI, iDRAC, KVM hypervisor)
-- **VLAN 20**: Users/Admin (jump hosts, admin workstations)
-- **VLAN 30**: Servers (core infra VMs)
-- **VLAN 40**: Storage network (high-speed)
-- **VLAN 60**: Lab services (Gitea, Nexus, Splunk)
-- **VLAN 70**: k8s/k0s nodes (Beelinks)
-- **VLAN 71**: k8s/k0s Load Balancer VIPs (MetalLB)
-- **VLAN 80**: IoT
-- **VLAN 90**: Guest/isolated network
-- **VLAN 98**: DMZ/external services
-- **VLAN 99**: OOB (reserved for BMC)
+
+Active (deployed): home stays on VLAN 1 (`192.168.1.0/24`); lab uses the
+`10.20.0.0/16` supernet with the VLAN ID as the third octet.
+
+- **VLAN 10** — `lab-mgmt` (`10.20.10.0/24`): iDRAC, DSM/UNAS mgmt, switch mgmt
+- **VLAN 20** — `lab-core` (`10.20.20.0/24`): k3s Beelink nodes + MetalLB VIPs
+- **VLAN 50** — `lab-stor` (`10.20.50.0/24`): reserved storage net, routed for now
+- **VLAN 60** — `lab-cntr` (`10.20.60.0/24`): Synology macvlan services
+
+Reserved on paper (not yet deployed): **30** ocp-compact, **40** ocp-sno,
+**70** kvm, **80** dmz, **90** guest, **100** disconnected. Legacy VLAN 3 retired.
 
 ### DNS Strategy
-- **Internal**: `.lab.2bit.name` domains per service (split-horizon)
-- **External**: 2bit.name (no lab exposure initially)
-- **Primary DNS**: Technitium DNS on k8s (authoritative + recursive)
-- **Recursive/Filtering**: Pi-hole on k8s forwarding to Technitium
+- **Internal**: `lab.2bit.name` (split-horizon); **External**: `2bit.name`
+  (no lab exposure initially)
+- **Pi-hole** (VIP `10.20.20.53`): client-facing first hop, ad/tracker filtering;
+  conditional-forwards `lab.2bit.name` to Technitium
+- **Technitium** (VIP `10.20.20.54`): authoritative `lab.2bit.name` + recursive
+- Single HA VIP (no non-filtering secondary); UDM Local DNS records for bootstrap
 
 ## Implementation Phases
 
@@ -182,7 +186,7 @@ This homelab supports testing and development needs, focusing on OpenShift, Kube
 ## Related Documents
 
 - [Networking Plan](./02-networking.md) - Detailed VLAN and network architecture
-- [Core Services Setup](./03-core-services.md) *(TBD)* - k0s cluster deployment
+- [Core Services Setup](./03-core-services.md) *(TBD)* - k3s cluster deployment
 - [Storage Configuration](./04-storage.md) *(TBD)* - Synology and democratic-csi setup
 - [Container Registry Setup](./05-container-registry.md) *(TBD)* - Harbor deployment
 - [Security Configuration](./15-security.md) *(TBD)* - Certificates and compliance

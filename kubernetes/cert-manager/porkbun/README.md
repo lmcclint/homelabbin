@@ -1,6 +1,6 @@
 # cert-manager with Porkbun (DNS-01)
 
-Pattern B: k0s manages its own certs using cert-manager and a Porkbun DNS-01 webhook. Caddy on Synology also uses Porkbun DNS-01, but each plane issues independently.
+Pattern B: k3s manages its own certs using cert-manager and a Porkbun DNS-01 webhook. Caddy on Synology also uses Porkbun DNS-01, but each plane issues independently.
 
 ## Install cert-manager (if not already)
 Follow cert-manager docs for your k8s.

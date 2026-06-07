@@ -16,7 +16,7 @@
 ### Phase 1: Foundation
 1. **[Overview & Hardware Allocation](./docs/01-overview.md)** - Complete architecture overview
 2. **[Networking Plan](./docs/02-networking.md)** - VLAN strategy and network design
-3. **[Core Services Setup](./docs/03-core-services.md)** *(TBD)* - k0s cluster, DNS, monitoring
+3. **[Core Services Setup](./docs/03-core-services.md)** *(TBD)* - k3s cluster, DNS, monitoring
 4. **[Storage Configuration](./docs/04-storage.md)** *(TBD)* - Synology, democratic-csi
 
 ### Phase 2: Container Platform
@@ -77,7 +77,7 @@ homelab-plan/
 │   └── ...
 ├── deployment/                  # Deployment configurations
 │   ├── synology/               # Docker Compose files for Synology
-│   ├── k0s/                    # k0s cluster manifests
+│   ├── k3s/                    # k3s cluster manifests
 │   ├── openshift/              # OpenShift installation configs
 │   └── vsphere/                # vSphere automation
 ├── scripts/                     # Automation scripts
@@ -93,7 +93,7 @@ homelab-plan/
 
 ### Container Platforms
 - **OpenShift 4.14+**: Two clusters (compact + SNO)
-- **k0s**: Core services cluster
+- **k3s**: Core services cluster
 - **vSphere**: VM workloads
 
 ### Core Services
