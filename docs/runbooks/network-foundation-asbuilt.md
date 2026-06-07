@@ -1,6 +1,6 @@
 # Lab Network — As-Built Record
 
-_Last updated: 2026-06-07 (Task 4)_
+_Last updated: 2026-06-07 (Task 5 — Plan 1 complete)_
 
 ## Networks (UDM SE)
 
@@ -10,8 +10,7 @@ lab VLANs (10/20/50/60); home + bypass left without a lab suffix.
 
 | VLAN | Name | Subnet | Gateway | DHCP | Domain | Notes |
 |---|---|---|---|---|---|---|
-| 1 | Default | 192.168.1.0/24 | .1 | server (existing) | — | Home/family devices |
-| 3 | 3Link | 192.168.3.0/24 | .1 | server | — | Legacy Beelink home — to retire |
+| 1 | Default | 192.168.1.0/24 | .1 | server (existing) | — | Home/family devices; UNAS Pro (.189) |
 | 10 | lab-mgmt | 10.20.10.0/24 | .1 | .100–.199 | lab.2bit.name | iDRAC, DSM mgmt, switch mgmt |
 | 20 | lab-core | 10.20.20.0/24 | .1 | .100–.199 | lab.2bit.name | Beelink nodes + MetalLB VIPs |
 | 50 | lab-stor | 10.20.50.0/24 | .1 | server | lab.2bit.name | Left as-is; future storage net |
@@ -43,7 +42,17 @@ when the cluster (Pi-hole/Technitium) is down. Answered on every UDM interface
   (`10.20.60.21`) for 10G Synology↔UNAS backups when the storage config is done
   — at which point decide the multi-homing route (default GW on 1G/home side;
   static `10.20.0.0/16 → 10.20.60.1` on the 10G/lab side if UNAS OS allows).
+- `fed1.lab.2bit.name` → `10.20.20.11`  (k3s node, static)
+- `fed2.lab.2bit.name` → `10.20.20.12`  (k3s node, static)
+- `fed3.lab.2bit.name` → `10.20.20.13`  (k3s node, static)
 - `registry` / `git` / `k8s-api` → deferred until those services/cluster exist
 
-## Beelink nodes
-- (not yet migrated to VLAN 20)
+## Beelink nodes (k3s — VLAN 20 lab-core)
+Migrated off the legacy VLAN 10 placement to static VLAN 20 IPs in the `.11–.99`
+range. Reachable + DNS-resolvable; OS already running, ready to image for Plan 2.
+
+- `fed1` → `10.20.20.11`
+- `fed2` → `10.20.20.12`
+- `fed3` → `10.20.20.13`
+
+Legacy VLAN 3 `3Link` retired (empty, removed from UDM).
