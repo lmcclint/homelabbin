@@ -1,6 +1,6 @@
 # Lab Network — As-Built Record
 
-_Last updated: 2026-06-06 (Task 2)_
+_Last updated: 2026-06-07 (Task 3)_
 
 ## Networks (UDM SE)
 
@@ -23,7 +23,10 @@ lab VLANs (10/20/50/60); home + bypass left without a lab suffix.
   Deliberate convenience choice — revisit/segment later if needed.
 
 ## SSIDs
-- (none recorded yet)
+- **Emergency-bypass SSID: deferred (not built).** Household fallback is the ATT
+  router's own guest WiFi — a fully separate router/uplink, so it bypasses the
+  UDM and lab entirely. Revisit a UDM-hosted bypass SSID only if that proves
+  insufficient.
 
 ## Local DNS records (UDM)
 - (none recorded yet)
