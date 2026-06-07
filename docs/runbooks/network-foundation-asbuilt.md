@@ -1,6 +1,6 @@
 # Lab Network — As-Built Record
 
-_Last updated: 2026-06-07 (Task 3)_
+_Last updated: 2026-06-07 (Task 4)_
 
 ## Networks (UDM SE)
 
@@ -29,7 +29,21 @@ lab VLANs (10/20/50/60); home + bypass left without a lab suffix.
   insufficient.
 
 ## Local DNS records (UDM)
-- (none recorded yet)
+Bootstrap A records served by the always-on UDM so critical names resolve even
+when the cluster (Pi-hole/Technitium) is down. Answered on every UDM interface
+(verified via both `@192.168.1.1` and `@10.20.20.1`).
+
+- `syno.lab.2bit.name` → `10.20.10.20` (Synology DSM/mgmt; lab-only NAS, single
+  trunked port tagging VLANs 10 + 60, also `10.20.60.20` on VLAN 60 — add
+  `syno-svc` later if a VLAN-60 name is needed)
+- `unas.lab.2bit.name` → `192.168.1.189` (UNAS Pro, UDM client fixed-IP +
+  Local DNS Record). **Household-shared box** (Apple Time Machine + family file
+  sharing) so it lives on home VLAN 1; lab reaches it over the flat routed
+  network. _Deferred enhancement:_ dual-home its 10G SFP+ onto VLAN 60
+  (`10.20.60.21`) for 10G Synology↔UNAS backups when the storage config is done
+  — at which point decide the multi-homing route (default GW on 1G/home side;
+  static `10.20.0.0/16 → 10.20.60.1` on the 10G/lab side if UNAS OS allows).
+- `registry` / `git` / `k8s-api` → deferred until those services/cluster exist
 
 ## Beelink nodes
 - (not yet migrated to VLAN 20)
