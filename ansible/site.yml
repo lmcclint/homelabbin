@@ -9,3 +9,4 @@
     - longhorn
     - cert-manager
     - traefik
+    - dns

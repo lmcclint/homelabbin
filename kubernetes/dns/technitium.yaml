@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: technitium-config
+  namespace: dns
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: technitium
+  namespace: dns
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate          # single RWO volume — don't run two pods at once
+  selector:
+    matchLabels:
+      app: technitium
+  template:
+    metadata:
+      labels:
+        app: technitium
+    spec:
+      containers:
+        - name: technitium
+          image: technitium/dns-server:15.2.0
+          env:
+            - name: DNS_SERVER_DOMAIN
+              value: dns.core.lab.2bit.name
+            - name: DNS_SERVER_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: technitium-admin
+                  key: password
+            - name: DNS_SERVER_RECURSION
+              value: AllowOnlyForPrivateNetworks
+          ports:
+            - { containerPort: 53, protocol: UDP }
+            - { containerPort: 53, protocol: TCP }
+            - { containerPort: 5380, protocol: TCP }
+          volumeMounts:
+            - name: config
+              mountPath: /etc/dns
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: technitium-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: technitium-dns
+  namespace: dns
+  annotations:
+    metallb.io/loadBalancerIPs: "10.20.20.54"
+spec:
+  type: LoadBalancer
+  selector:
+    app: technitium
+  ports:
+    - { name: dns-udp, port: 53, targetPort: 53, protocol: UDP }
+    - { name: dns-tcp, port: 53, targetPort: 53, protocol: TCP }
+    - { name: web, port: 5380, targetPort: 5380, protocol: TCP }
