@@ -1,0 +1,56 @@
+---
+- name: Install the standard Gateway API CRDs
+  delegate_to: localhost
+  become: false
+  run_once: true
+  ansible.builtin.command: >-
+    kubectl --kubeconfig {{ playbook_dir }}/../kubeconfig apply -f
+    https://github.com/kubernetes-sigs/gateway-api/releases/download/{{ gateway_api_version }}/standard-install.yaml
+  register: gwapi_crds
+  changed_when: "'created' in gwapi_crds.stdout or 'configured' in gwapi_crds.stdout"
+
+- name: Install Traefik as the Gateway API controller via Helm
+  delegate_to: localhost
+  become: false
+  run_once: true
+  kubernetes.core.helm:
+    name: traefik
+    chart_ref: traefik
+    chart_repo_url: https://traefik.github.io/charts
+    chart_version: "{{ traefik_chart_version }}"
+    release_namespace: traefik
+    create_namespace: true
+    wait: true
+    kubeconfig: "{{ playbook_dir }}/../kubeconfig"
+    values:
+      providers:
+        kubernetesGateway:
+          enabled: true
+        kubernetesIngress:
+          enabled: false
+      gateway:
+        enabled: false          # we manage our own Gateway resource
+      service:
+        type: LoadBalancer
+        annotations:
+          metallb.io/loadBalancerIPs: "10.20.20.200"
+      ports:
+        web:
+          port: 8000
+          expose:
+            default: true
+          exposedPort: 80
+        websecure:
+          port: 8443
+          expose:
+            default: true
+          exposedPort: 443
+
+- name: Wait for Traefik to be ready
+  delegate_to: localhost
+  become: false
+  run_once: true
+  ansible.builtin.command: >-
+    kubectl --kubeconfig {{ playbook_dir }}/../kubeconfig
+    -n traefik rollout status deploy/traefik --timeout=180s
+  changed_when: false

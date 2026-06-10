@@ -8,4 +8,4 @@
     - metallb
     - longhorn
     - cert-manager
-    # - traefik    # enabled in Task 3
+    - traefik
