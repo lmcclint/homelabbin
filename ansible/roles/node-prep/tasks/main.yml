@@ -1,0 +1,116 @@
+---
+# --- DNS FIRST -------------------------------------------------------------
+# The nodes use systemd-resolved over the tagged VLAN link (enp1s0.20), which
+# ships with NO upstream DNS configured -> dnf/name resolution fails. Pin the
+# link's DNS to the UDM before anything that needs the network by name.
+
+- name: Discover the primary NetworkManager connection (the default-route link)
+  ansible.builtin.command: "nmcli -t -g GENERAL.CONNECTION device show {{ ansible_default_ipv4.interface }}"
+  register: nm_conn
+  changed_when: false
+
+- name: Pin node DNS to the UDM and ignore any DHCP-provided DNS
+  ansible.builtin.command: >-
+    nmcli connection modify "{{ nm_conn.stdout }}"
+    ipv4.ignore-auto-dns yes ipv4.dns "{{ udm_gateway }}"
+  changed_when: true
+
+- name: Reapply the connection to push DNS to resolved (no link bounce)
+  ansible.builtin.command: "nmcli device reapply {{ ansible_default_ipv4.interface }}"
+  changed_when: false
+
+- name: Verify the node can now resolve an external name via the stub
+  ansible.builtin.command: "resolvectl query mirrors.fedoraproject.org"
+  register: dns_check
+  changed_when: false
+  retries: 5
+  delay: 3
+  until: dns_check.rc == 0
+
+# --- SELinux bindings, then enforce ----------------------------------------
+# The ansible.posix.selinux module needs python3-libselinux present on the host
+# (missing on fed2/fed3). Install it now that DNS works, before enforcing.
+
+- name: Ensure python3-libselinux is present (required by the selinux module)
+  ansible.builtin.dnf:
+    name: python3-libselinux
+    state: present
+
+- name: Ensure SELinux is enforcing (targeted)
+  ansible.posix.selinux:
+    policy: targeted
+    state: enforcing
+
+# --- Host hardening / kubelet prerequisites --------------------------------
+
+- name: Disable firewalld (flat trusted lab)
+  ansible.builtin.systemd:
+    name: firewalld
+    state: stopped
+    enabled: false
+  failed_when: false
+
+- name: Remove zram swap config (kubelet wants swap off)
+  ansible.builtin.dnf:
+    name: zram-generator-defaults
+    state: absent
+
+- name: Turn off all swap now
+  ansible.builtin.command: swapoff -a
+  changed_when: false
+
+- name: Install Longhorn node prerequisites (iscsi + nfs client)
+  ansible.builtin.dnf:
+    name:
+      - iscsi-initiator-utils
+      - nfs-utils
+    state: present
+
+- name: Enable and start iscsid (required by Longhorn)
+  ansible.builtin.systemd:
+    name: iscsid
+    state: started
+    enabled: true
+
+# --- Disks: k3s data LV on the NVMe VG, Longhorn on the dedicated SSD -------
+
+- name: Discover the LVM volume group backing the OS (name differs per node)
+  ansible.builtin.command: vgs --noheadings -o vg_name
+  register: vg_query
+  changed_when: false
+
+- name: Set the volume group fact (single VG per node)
+  ansible.builtin.set_fact:
+    k3s_vg: "{{ vg_query.stdout_lines[0] | trim }}"
+
+- name: Create k3s-data logical volume on the NVMe VG
+  community.general.lvol:
+    vg: "{{ k3s_vg }}"
+    lv: "{{ k3s_data_lv }}"
+    size: "{{ k3s_data_lv_size }}"
+    state: present
+
+- name: Format k3s-data as xfs
+  community.general.filesystem:
+    fstype: xfs
+    dev: "/dev/{{ k3s_vg }}/{{ k3s_data_lv }}"
+
+- name: Mount k3s data dir ({{ k3s_data_mount }})
+  ansible.posix.mount:
+    path: "{{ k3s_data_mount }}"
+    src: "/dev/{{ k3s_vg }}/{{ k3s_data_lv }}"
+    fstype: xfs
+    state: mounted
+
+- name: Format the dedicated SSD ({{ longhorn_disk_dev }}) as xfs for Longhorn
+  community.general.filesystem:
+    fstype: xfs
+    dev: "{{ longhorn_disk_dev }}"
+    # force defaults to false -> will NOT reformat if a filesystem already exists
+
+- name: Mount Longhorn data dir ({{ longhorn_mount }})
+  ansible.posix.mount:
+    path: "{{ longhorn_mount }}"
+    src: "{{ longhorn_disk_dev }}"
+    fstype: xfs
+    state: mounted

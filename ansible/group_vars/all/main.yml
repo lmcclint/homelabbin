@@ -8,7 +8,8 @@ metallb_dns_pool: "10.20.20.53-10.20.20.54"
 metallb_general_pool: "10.20.20.200-10.20.20.254"
 
 # Disk layout
-k3s_data_vg: "fedora"              # existing VG on the NVMe
+# NOTE: the OS volume-group name differs per node (fed1/fed2=fedora, fed3=fedora_fed3),
+# so node-prep auto-detects it at runtime instead of hardcoding a name here.
 k3s_data_lv: "k3s-data"
 k3s_data_lv_size: "200g"           # carved from the ~460G VG free space
 k3s_data_mount: "/var/lib/rancher"
