@@ -1,0 +1,29 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: dns-pool
+  namespace: metallb-system
+spec:
+  addresses:
+    - 10.20.20.53-10.20.20.54
+  autoAssign: false        # .53/.54 assigned only by explicit annotation
+---
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: general-pool
+  namespace: metallb-system
+spec:
+  addresses:
+    - 10.20.20.200-10.20.20.254
+  autoAssign: true
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: l2-all
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+    - dns-pool
+    - general-pool

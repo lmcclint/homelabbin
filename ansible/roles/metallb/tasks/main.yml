@@ -1,0 +1,32 @@
+---
+- name: Install MetalLB via Helm
+  delegate_to: localhost
+  become: false
+  run_once: true
+  kubernetes.core.helm:
+    name: metallb
+    chart_ref: metallb
+    chart_repo_url: https://metallb.github.io/metallb
+    chart_version: "{{ metallb_chart_version }}"
+    release_namespace: metallb-system
+    create_namespace: true
+    wait: true
+    kubeconfig: "{{ playbook_dir }}/../kubeconfig"
+
+- name: Wait for the MetalLB controller to be ready
+  delegate_to: localhost
+  become: false
+  run_once: true
+  ansible.builtin.command: >-
+    kubectl --kubeconfig {{ playbook_dir }}/../kubeconfig
+    -n metallb-system rollout status deploy/metallb-controller --timeout=120s
+  changed_when: false
+
+- name: Apply MetalLB address pools and L2 advertisement
+  delegate_to: localhost
+  become: false
+  run_once: true
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ role_path }}/files/pools.yaml"
+    kubeconfig: "{{ playbook_dir }}/../kubeconfig"

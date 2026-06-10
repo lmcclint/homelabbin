@@ -5,5 +5,5 @@
   roles:
     - node-prep
     - k3s
-    # - metallb    # enabled in Task 3
+    - metallb
     # - longhorn   # enabled in Task 4
