@@ -45,6 +45,21 @@ _Last updated: 2026-06-10 (Plan 2a complete)_
   `ansible/.vault-pass` (gitignored) + password manager.
 - Workstation deps: `helm`, python `kubernetes` lib (for `kubernetes.core`).
 
+## TLS & Ingress (Plan 2b)
+- cert-manager v1.20.2 (`cert-manager` ns) + Talinx Porkbun DNS-01 webhook
+  (groupName `porkbun.talinx.dev`). Porkbun creds in ansible-vault, rendered to
+  Secret `porkbun-secret`.
+- ClusterIssuer `le-dns-porkbun` (Let's Encrypt prod). Wildcard Certificate
+  `lab-2bit-wildcard` -> secret `lab-2bit-wildcard-tls` in ns `traefik`, auto-renewed
+  (`CN=*.lab.2bit.name`, SAN `*.lab.2bit.name` + `lab.2bit.name`).
+- Gateway API CRDs v1.5.1. Traefik chart 40.3.0 as the Gateway controller, LB VIP
+  `10.20.20.200`, kubernetesIngress disabled. EntryPoints bind real 80/443 via
+  `NET_BIND_SERVICE` so Gateway `:443` listeners match.
+- `Gateway/lab-gateway` (ns traefik): HTTPS listener `*.lab.2bit.name`, terminates
+  with the wildcard cert, allows routes from all namespaces. Programmed=True.
+- HTTPRoutes: `longhorn-ui` -> longhorn.lab.2bit.name (proven over browser-valid
+  HTTPS, `ssl_verify_result=0`). Add per-service HTTPRoutes here as services land.
+
 ## Next
-- Plan 2b: cert-manager + Porkbun wildcard, Traefik running Gateway API,
-  Pi-hole (.53) + Technitium (.54), staged client-DNS cutover (closes Plan 1 Task 6).
+- Plan 2c: Pi-hole (.53) + Technitium (.54) DNS, their HTTPRoutes on lab-gateway,
+  staged client-DNS cutover (closes Plan 1 Task 6).
