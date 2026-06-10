@@ -1,6 +1,6 @@
 # Lab Network — As-Built Record
 
-_Last updated: 2026-06-07 (Task 5 — Plan 1 complete)_
+_Last updated: 2026-06-10 (Plan 1 Task 6 closed — client DNS cut over to Pi-hole)_
 
 ## Networks (UDM SE)
 
@@ -15,6 +15,16 @@ lab VLANs (10/20/50/60); home + bypass left without a lab suffix.
 | 20 | lab-core | 10.20.20.0/24 | .1 | .100–.199 | lab.2bit.name | Beelink nodes + MetalLB VIPs |
 | 50 | lab-stor | 10.20.50.0/24 | .1 | server | lab.2bit.name | Left as-is; future storage net |
 | 60 | lab-cntr | 10.20.60.0/24 | .1 | .100–.199 | lab.2bit.name | Synology macvlan services |
+
+## Client DNS (Plan 1 Task 6 — COMPLETE 2026-06-10)
+- All client VLANs (1 Default, 10 lab-mgmt, 20 lab-core, 60 lab-cntr) now hand out
+  **DHCP DNS = `10.20.20.53`** (Pi-hole VIP) — single entry, no non-filtering
+  secondary (avoids ad leakage). Whole-house filtering + split-horizon `lab.2bit.name`.
+- Pi-hole `.53` filters then forwards to Technitium `.54` (authoritative `lab.2bit.name`
+  + recursive). `*.core.lab.2bit.name → 10.20.20.200` (k3s gateway) via Technitium wildcard.
+- **Cluster nodes stay on the UDM (`10.20.20.1`)** (pinned in node-prep) — no circular dep.
+- UDM Local DNS records (below) remain the cold-boot floor if the cluster is down.
+- Rollback: set a VLAN's DHCP DNS back to `10.20.20.1` + renew. Emergency: ATT guest WiFi.
 
 ## Firewall (inter-VLAN)
 - **Flat by design (starter phase).** No custom block/allow rules; UniFi's default
