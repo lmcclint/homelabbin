@@ -6,4 +6,4 @@
     - node-prep
     - k3s
     - metallb
-    # - longhorn   # enabled in Task 4
+    - longhorn
