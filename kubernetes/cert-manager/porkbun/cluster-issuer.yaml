@@ -4,19 +4,19 @@ metadata:
   name: le-dns-porkbun
 spec:
   acme:
-    email: you@2bit.name
+    email: lee@2bit.name
     server: https://acme-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
       name: le-account-key
     solvers:
-    - dns01:
-        webhook:
-          groupName: acme.porkbun
-          solverName: porkbun
-          config:
-            apiKeySecretRef:
-              name: porkbun-credentials
-              key: api-key
-            secretApiKeySecretRef:
-              name: porkbun-credentials
-              key: secret-api-key
+      - dns01:
+          webhook:
+            groupName: porkbun.talinx.dev
+            solverName: porkbun
+            config:
+              apiKey:
+                name: porkbun-secret
+                key: PORKBUN_API_KEY
+              secretApiKey:
+                name: porkbun-secret
+                key: PORKBUN_SECRET_API_KEY

@@ -1,0 +1,48 @@
+---
+- name: Install cert-manager via Helm (with CRDs)
+  delegate_to: localhost
+  become: false
+  run_once: true
+  kubernetes.core.helm:
+    name: cert-manager
+    chart_ref: cert-manager
+    chart_repo_url: https://charts.jetstack.io
+    chart_version: "{{ cert_manager_chart_version }}"
+    release_namespace: cert-manager
+    create_namespace: true
+    wait: true
+    kubeconfig: "{{ playbook_dir }}/../kubeconfig"
+    values:
+      crds:
+        enabled: true
+
+- name: Install the Talinx Porkbun DNS-01 webhook via Helm
+  delegate_to: localhost
+  become: false
+  run_once: true
+  kubernetes.core.helm:
+    name: cert-manager-webhook-porkbun
+    chart_ref: cert-manager-webhook-porkbun
+    chart_repo_url: https://talinx.github.io/cert-manager-webhook-porkbun
+    chart_version: "{{ porkbun_webhook_chart_version }}"
+    release_namespace: cert-manager
+    wait: true
+    kubeconfig: "{{ playbook_dir }}/../kubeconfig"
+
+- name: Render the Porkbun API secret into the cluster
+  delegate_to: localhost
+  become: false
+  run_once: true
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'porkbun-secret.yaml.j2') | from_yaml }}"
+    kubeconfig: "{{ playbook_dir }}/../kubeconfig"
+
+- name: Apply the Porkbun ClusterIssuer
+  delegate_to: localhost
+  become: false
+  run_once: true
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ playbook_dir }}/../kubernetes/cert-manager/porkbun/cluster-issuer.yaml"
+    kubeconfig: "{{ playbook_dir }}/../kubeconfig"
