@@ -65,6 +65,16 @@ _Last updated: 2026-06-10 (Plan 2a complete)_
 - HTTPRoutes: `longhorn-ui` -> longhorn.core.lab.2bit.name (proven over browser-valid
   HTTPS, `ssl_verify_result=0`). Add per-service HTTPRoutes here as services land.
 
-## Next
-- Plan 2c: Pi-hole (.53) + Technitium (.54) DNS, their HTTPRoutes on lab-gateway,
-  staged client-DNS cutover (closes Plan 1 Task 6).
+## DNS services (Plan 2c)
+- Namespace `dns`. Single-replica Deployments on Longhorn PVCs (Recreate strategy).
+- Technitium 15.2.0 @ VIP 10.20.20.54 (53 udp/tcp + 5380 web). Authoritative for
+  lab.2bit.name (Primary zone), recursive (AllowOnlyForPrivateNetworks, root hints).
+  Zone seeded via API: `*.core.lab.2bit.name`->.200 (gateway wildcard), syno, unas,
+  fed1-3. UI: dns.core.lab.2bit.name.
+- Pi-hole v6 (2026.05.0) @ VIP 10.20.20.53 (53 udp/tcp + 80 web). Filters then
+  forwards to Technitium (.54) as sole upstream; listeningMode ALL. UI:
+  pihole.core.lab.2bit.name.
+- Admin passwords in ansible-vault (technitium-admin / pihole-admin secrets).
+- Client VLANs (1/10/20/60) DHCP DNS = 10.20.20.53. Nodes still resolve via UDM.
+- Single-HA-VIP model: no non-filtering secondary (avoids ad leakage). MetalLB VIP
+  failover + Longhorn give single-node-failure recovery (brief blip on reschedule).
