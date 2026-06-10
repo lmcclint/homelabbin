@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: traefik
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: lab-2bit-wildcard
+  namespace: traefik
+spec:
+  secretName: lab-2bit-wildcard-tls
+  issuerRef:
+    name: le-dns-porkbun
+    kind: ClusterIssuer
+  commonName: "*.lab.2bit.name"
+  dnsNames:
+    - "*.lab.2bit.name"
+    - "lab.2bit.name"

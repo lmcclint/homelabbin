@@ -46,3 +46,12 @@
     state: present
     src: "{{ playbook_dir }}/../kubernetes/cert-manager/porkbun/cluster-issuer.yaml"
     kubeconfig: "{{ playbook_dir }}/../kubeconfig"
+
+- name: Apply the wildcard certificate (issued into the traefik namespace)
+  delegate_to: localhost
+  become: false
+  run_once: true
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ playbook_dir }}/../kubernetes/cert-manager/porkbun/wildcard-certificate.yaml"
+    kubeconfig: "{{ playbook_dir }}/../kubeconfig"
