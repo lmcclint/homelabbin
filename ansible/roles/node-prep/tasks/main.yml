@@ -9,14 +9,21 @@
   register: nm_conn
   changed_when: false
 
+- name: Read the connection's current DNS settings
+  ansible.builtin.command: "nmcli -g ipv4.dns,ipv4.ignore-auto-dns connection show \"{{ nm_conn.stdout }}\""
+  register: cur_dns
+  changed_when: false
+
 - name: Pin node DNS to the UDM and ignore any DHCP-provided DNS
   ansible.builtin.command: >-
     nmcli connection modify "{{ nm_conn.stdout }}"
     ipv4.ignore-auto-dns yes ipv4.dns "{{ udm_gateway }}"
-  changed_when: true
+  when: udm_gateway not in cur_dns.stdout or 'yes' not in cur_dns.stdout
+  register: nm_dns
 
 - name: Reapply the connection to push DNS to resolved (no link bounce)
   ansible.builtin.command: "nmcli device reapply {{ ansible_default_ipv4.interface }}"
+  when: nm_dns is changed
   changed_when: false
 
 - name: Verify the node can now resolve an external name via the stub
