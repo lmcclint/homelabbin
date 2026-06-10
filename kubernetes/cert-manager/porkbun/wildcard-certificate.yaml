@@ -6,14 +6,14 @@ metadata:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: lab-2bit-wildcard
+  name: core-lab-wildcard
   namespace: traefik
 spec:
-  secretName: lab-2bit-wildcard-tls
+  secretName: core-lab-wildcard-tls
   issuerRef:
     name: le-dns-porkbun
     kind: ClusterIssuer
-  commonName: "*.lab.2bit.name"
+  commonName: "*.core.lab.2bit.name"
   dnsNames:
-    - "*.lab.2bit.name"
-    - "lab.2bit.name"
+    - "*.core.lab.2bit.name"
+    - "core.lab.2bit.name"

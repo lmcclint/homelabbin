@@ -50,14 +50,19 @@ _Last updated: 2026-06-10 (Plan 2a complete)_
   (groupName `porkbun.talinx.dev`). Porkbun creds in ansible-vault, rendered to
   Secret `porkbun-secret`.
 - ClusterIssuer `le-dns-porkbun` (Let's Encrypt prod). Wildcard Certificate
-  `lab-2bit-wildcard` -> secret `lab-2bit-wildcard-tls` in ns `traefik`, auto-renewed
-  (`CN=*.lab.2bit.name`, SAN `*.lab.2bit.name` + `lab.2bit.name`).
+  `core-lab-wildcard` -> secret `core-lab-wildcard-tls` in ns `traefik`, auto-renewed
+  (`CN=*.core.lab.2bit.name`, SAN `*.core.lab.2bit.name` + `core.lab.2bit.name`).
+- **Subdomain scoping:** this cluster owns `*.core.lab.2bit.name` (its own
+  per-cluster wildcard), NOT flat `*.lab.2bit.name` — the flat namespace stays free
+  for the Synology/Caddy plane (which serves `git.lab.2bit.name` etc. with its own
+  Porkbun wildcard). Avoids two ingress planes fighting over one wildcard + lets us
+  use a single `*.core.lab.2bit.name -> 10.20.20.200` DNS record cleanly.
 - Gateway API CRDs v1.5.1. Traefik chart 40.3.0 as the Gateway controller, LB VIP
   `10.20.20.200`, kubernetesIngress disabled. EntryPoints bind real 80/443 via
   `NET_BIND_SERVICE` so Gateway `:443` listeners match.
-- `Gateway/lab-gateway` (ns traefik): HTTPS listener `*.lab.2bit.name`, terminates
-  with the wildcard cert, allows routes from all namespaces. Programmed=True.
-- HTTPRoutes: `longhorn-ui` -> longhorn.lab.2bit.name (proven over browser-valid
+- `Gateway/lab-gateway` (ns traefik): HTTPS listener `*.core.lab.2bit.name`,
+  terminates with the wildcard cert, allows routes from all namespaces. Programmed=True.
+- HTTPRoutes: `longhorn-ui` -> longhorn.core.lab.2bit.name (proven over browser-valid
   HTTPS, `ssl_verify_result=0`). Add per-service HTTPRoutes here as services land.
 
 ## Next

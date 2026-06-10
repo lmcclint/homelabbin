@@ -8,7 +8,7 @@ spec:
     - name: lab-gateway
       namespace: traefik
   hostnames:
-    - "longhorn.lab.2bit.name"
+    - "longhorn.core.lab.2bit.name"
   rules:
     - backendRefs:
         - name: longhorn-frontend

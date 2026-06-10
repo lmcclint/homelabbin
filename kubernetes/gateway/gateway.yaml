@@ -9,12 +9,12 @@ spec:
     - name: websecure
       protocol: HTTPS
       port: 443
-      hostname: "*.lab.2bit.name"
+      hostname: "*.core.lab.2bit.name"
       tls:
         mode: Terminate
         certificateRefs:
           - kind: Secret
-            name: lab-2bit-wildcard-tls
+            name: core-lab-wildcard-tls
       allowedRoutes:
         namespaces:
           from: All
