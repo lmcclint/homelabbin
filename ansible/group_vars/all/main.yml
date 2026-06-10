@@ -1,0 +1,16 @@
+# Cluster networking
+lab_core_subnet: "10.20.20.0/24"
+udm_gateway: "10.20.20.1"          # nodes resolve here (no circular DNS dep)
+k3s_api_endpoint: "10.20.20.11"    # fed1, the cluster-init server
+
+# MetalLB address pools (VLAN 20) — source of truth is roles/metallb/files/pools.yaml
+metallb_dns_pool: "10.20.20.53-10.20.20.54"
+metallb_general_pool: "10.20.20.200-10.20.20.254"
+
+# Disk layout
+k3s_data_vg: "fedora"              # existing VG on the NVMe
+k3s_data_lv: "k3s-data"
+k3s_data_lv_size: "200g"           # carved from the ~460G VG free space
+k3s_data_mount: "/var/lib/rancher"
+longhorn_disk_dev: "/dev/sda"      # the empty 954G SSD
+longhorn_mount: "/var/lib/longhorn"

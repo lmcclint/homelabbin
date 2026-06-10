@@ -1,0 +1,5 @@
+# Pinned versions — confirmed current stable as of 2026-06-09.
+# Bump here (single source of truth) when you intend to upgrade.
+k3s_version: "v1.36.1+k3s1"
+metallb_chart_version: "0.16.1"
+longhorn_chart_version: "1.12.0"

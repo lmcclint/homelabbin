@@ -54,6 +54,8 @@ terraform.tfvars
 # Ansible
 *.retry
 vault_pass.txt
+.vault-pass
+ansible/.vault-pass
 
 # Kubernetes
 kubeconfig*
