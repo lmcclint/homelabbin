@@ -4,6 +4,6 @@
   gather_facts: true
   roles:
     - node-prep
-    # - k3s        # enabled in Task 2
+    - k3s
     # - metallb    # enabled in Task 3
     # - longhorn   # enabled in Task 4

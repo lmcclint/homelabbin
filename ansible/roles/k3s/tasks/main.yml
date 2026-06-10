@@ -1,0 +1,50 @@
+---
+- name: Initialise the first server (fed1)
+  when: k3s_role == "server-init"
+  ansible.builtin.shell: |
+    curl -sfL https://get.k3s.io | \
+      INSTALL_K3S_VERSION="{{ k3s_version }}" \
+      K3S_TOKEN="{{ k3s_token }}" \
+      sh -s - server --cluster-init \
+        --disable=traefik,servicelb \
+        --write-kubeconfig-mode=644 \
+        --tls-san={{ k3s_api_endpoint }}
+  args:
+    creates: /etc/rancher/k3s/k3s.yaml
+
+- name: Wait for the API server on fed1 to be ready
+  when: k3s_role == "server-init"
+  ansible.builtin.command: k3s kubectl get --raw=/readyz
+  register: readyz
+  until: readyz.rc == 0
+  retries: 30
+  delay: 10
+  changed_when: false
+
+- name: Join the remaining servers (fed2, fed3)
+  when: k3s_role == "server"
+  ansible.builtin.shell: |
+    curl -sfL https://get.k3s.io | \
+      INSTALL_K3S_VERSION="{{ k3s_version }}" \
+      K3S_TOKEN="{{ k3s_token }}" \
+      sh -s - server --server https://{{ k3s_api_endpoint }}:6443 \
+        --disable=traefik,servicelb \
+        --write-kubeconfig-mode=644
+  args:
+    creates: /etc/rancher/k3s/k3s.yaml
+
+- name: Fetch kubeconfig from fed1 to the workstation
+  when: k3s_role == "server-init"
+  ansible.builtin.fetch:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: "{{ playbook_dir }}/../kubeconfig"
+    flat: true
+
+- name: Rewrite kubeconfig server address to fed1's IP
+  when: k3s_role == "server-init"
+  delegate_to: localhost
+  become: false
+  ansible.builtin.replace:
+    path: "{{ playbook_dir }}/../kubeconfig"
+    regexp: 'https://127\.0\.0\.1:6443'
+    replace: "https://{{ k3s_api_endpoint }}:6443"
