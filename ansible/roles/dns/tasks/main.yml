@@ -34,3 +34,52 @@
     kubectl --kubeconfig {{ playbook_dir }}/../kubeconfig
     -n dns rollout status deploy/technitium --timeout=180s
   changed_when: false
+
+- name: Log in to the Technitium API
+  delegate_to: localhost
+  become: false
+  run_once: true
+  ansible.builtin.uri:
+    url: "http://10.20.20.54:5380/api/user/login?user=admin&pass={{ technitium_admin_password | urlencode }}&includeInfo=true"
+    return_content: true
+  register: tech_login
+  retries: 10
+  delay: 5
+  until: tech_login.json is defined and tech_login.json.status == "ok"
+
+- name: Set the API token fact
+  delegate_to: localhost
+  become: false
+  run_once: true
+  ansible.builtin.set_fact:
+    tech_token: "{{ tech_login.json.token }}"
+
+- name: Create the lab.2bit.name primary zone (idempotent)
+  delegate_to: localhost
+  become: false
+  run_once: true
+  ansible.builtin.uri:
+    url: "http://10.20.20.54:5380/api/zones/create?token={{ tech_token }}&zone=lab.2bit.name&type=Primary"
+    return_content: true
+  register: zone_create
+  failed_when: >-
+    zone_create.json.status != "ok" and
+    'already exists' not in (zone_create.json.errorMessage | default(''))
+
+- name: Seed lab.2bit.name A records (overwrite = idempotent)
+  delegate_to: localhost
+  become: false
+  run_once: true
+  ansible.builtin.uri:
+    url: >-
+      http://10.20.20.54:5380/api/zones/records/add?token={{ tech_token }}&zone=lab.2bit.name&domain={{ item.name }}&type=A&ipAddress={{ item.ip }}&ttl=300&overwrite=true
+    return_content: true
+  register: rec
+  failed_when: rec.json.status != "ok"
+  loop:
+    - { name: "*.core.lab.2bit.name", ip: "10.20.20.200" }   # gateway wildcard
+    - { name: "syno.lab.2bit.name",   ip: "10.20.10.20" }
+    - { name: "unas.lab.2bit.name",   ip: "192.168.1.189" }
+    - { name: "fed1.lab.2bit.name",   ip: "10.20.20.11" }
+    - { name: "fed2.lab.2bit.name",   ip: "10.20.20.12" }
+    - { name: "fed3.lab.2bit.name",   ip: "10.20.20.13" }
