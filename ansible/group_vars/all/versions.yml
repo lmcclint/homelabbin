@@ -3,3 +3,9 @@
 k3s_version: "v1.36.1+k3s1"
 metallb_chart_version: "0.16.1"
 longhorn_chart_version: "1.12.0"
+
+# Platform layer (Plan 2b)
+cert_manager_chart_version: "v1.20.2"
+porkbun_webhook_chart_version: "1.0.0"
+gateway_api_version: "v1.5.1"
+traefik_chart_version: "40.3.0"
