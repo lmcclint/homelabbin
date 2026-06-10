@@ -110,3 +110,15 @@
     kubectl --kubeconfig {{ playbook_dir }}/../kubeconfig
     -n dns rollout status deploy/pihole --timeout=180s
   changed_when: false
+
+- name: Apply the DNS UI HTTPRoutes
+  delegate_to: localhost
+  become: false
+  run_once: true
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ item }}"
+    kubeconfig: "{{ playbook_dir }}/../kubeconfig"
+  loop:
+    - "{{ playbook_dir }}/../kubernetes/gateway/httproute-pihole.yaml"
+    - "{{ playbook_dir }}/../kubernetes/gateway/httproute-technitium.yaml"

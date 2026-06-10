@@ -1,0 +1,15 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: pihole-ui
+  namespace: dns
+spec:
+  parentRefs:
+    - name: lab-gateway
+      namespace: traefik
+  hostnames:
+    - "pihole.core.lab.2bit.name"
+  rules:
+    - backendRefs:
+        - name: pihole-dns
+          port: 80
