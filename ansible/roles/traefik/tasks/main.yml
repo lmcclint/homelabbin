@@ -34,17 +34,28 @@
         type: LoadBalancer
         annotations:
           metallb.io/loadBalancerIPs: "10.20.20.200"
+      # Bind the real 80/443 so Gateway listeners on :443 match Traefik entryPoints.
+      securityContext:
+        capabilities:
+          add:
+            - NET_BIND_SERVICE
+          drop:
+            - ALL
+        readOnlyRootFilesystem: true
+        runAsGroup: 65532
+        runAsNonRoot: true
+        runAsUser: 65532
       ports:
         web:
-          port: 8000
-          expose:
-            default: true
+          port: 80
           exposedPort: 80
-        websecure:
-          port: 8443
           expose:
             default: true
+        websecure:
+          port: 443
           exposedPort: 443
+          expose:
+            default: true
 
 - name: Wait for Traefik to be ready
   delegate_to: localhost
@@ -54,3 +65,15 @@
     kubectl --kubeconfig {{ playbook_dir }}/../kubeconfig
     -n traefik rollout status deploy/traefik --timeout=180s
   changed_when: false
+
+- name: Apply the lab Gateway and HTTPRoutes
+  delegate_to: localhost
+  become: false
+  run_once: true
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ item }}"
+    kubeconfig: "{{ playbook_dir }}/../kubeconfig"
+  loop:
+    - "{{ playbook_dir }}/../kubernetes/gateway/gateway.yaml"
+    - "{{ playbook_dir }}/../kubernetes/gateway/httproute-longhorn.yaml"
