@@ -83,3 +83,30 @@
     - { name: "fed1.lab.2bit.name",   ip: "10.20.20.11" }
     - { name: "fed2.lab.2bit.name",   ip: "10.20.20.12" }
     - { name: "fed3.lab.2bit.name",   ip: "10.20.20.13" }
+
+- name: Render the Pi-hole admin secret
+  delegate_to: localhost
+  become: false
+  run_once: true
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'pihole-admin-secret.yaml.j2') | from_yaml }}"
+    kubeconfig: "{{ playbook_dir }}/../kubeconfig"
+
+- name: Deploy Pi-hole
+  delegate_to: localhost
+  become: false
+  run_once: true
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ playbook_dir }}/../kubernetes/dns/pihole.yaml"
+    kubeconfig: "{{ playbook_dir }}/../kubeconfig"
+
+- name: Wait for Pi-hole to be ready
+  delegate_to: localhost
+  become: false
+  run_once: true
+  ansible.builtin.command: >-
+    kubectl --kubeconfig {{ playbook_dir }}/../kubeconfig
+    -n dns rollout status deploy/pihole --timeout=180s
+  changed_when: false
