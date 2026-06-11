@@ -55,6 +55,8 @@ cd ansible && ansible-playbook site.yml      # idempotent; safe to re-run anytim
 Edit the seed loop in `ansible/roles/dns/tasks/main.yml`, add
 `- { name: "foo.lab.2bit.name", ip: "10.20.x.y" }`, re-run `ansible-playbook site.yml`.
 (`overwrite=true` = idempotent.) — *Not* `*.core` names; those already resolve to the gateway.
+The `dns` role ends with a `pihole reloaddns`, so the record resolves via `.53` immediately
+(no stale-NXDOMAIN wait, no manual flush). Wildcards work too (e.g. `*.apps.ocp1.lab.2bit.name`).
 
 ### Add a new web service on the cluster (`foo.core.lab.2bit.name`)
 1. Deploy it (Deployment + Service), e.g. under `kubernetes/<app>/`.
