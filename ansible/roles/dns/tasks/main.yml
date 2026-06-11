@@ -80,6 +80,7 @@
     - { name: "*.core.lab.2bit.name", ip: "10.20.20.200" }   # gateway wildcard
     - { name: "syno.lab.2bit.name",   ip: "10.20.10.20" }
     - { name: "unas.lab.2bit.name",   ip: "192.168.1.189" }
+    - { name: "vcsa.lab.2bit.name",   ip: "192.168.1.75" }
     - { name: "plex.lab.2bit.name",   ip: "10.20.20.201" }
     - { name: "fed1.lab.2bit.name",   ip: "10.20.20.11" }
     - { name: "fed2.lab.2bit.name",   ip: "10.20.20.12" }

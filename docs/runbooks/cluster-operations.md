@@ -5,7 +5,7 @@ services. It's the fast orientation; the authoritative detail lives in
 [`k3s-cluster-asbuilt.md`](./k3s-cluster-asbuilt.md) and
 [`network-foundation-asbuilt.md`](./network-foundation-asbuilt.md).
 
-_Last updated: 2026-06-10 (Plans 1, 2a, 2b, 2c complete)._
+_Last updated: 2026-06-11 (Plans 1, 2a, 2b, 2c complete; Plan 3 Plex added)._
 
 ## What this cluster is
 
@@ -22,6 +22,7 @@ idempotent Ansible run; nothing is hand-applied that isn't in git.
 | Ingress | Traefik + Gateway API | chart 40.3.0 / CRD v1.5.1 | `ansible/roles/traefik`, `kubernetes/gateway/` |
 | DNS | Technitium (auth+recursive) | 15.2.0 | `kubernetes/dns/technitium.yaml`, `ansible/roles/dns` |
 | DNS | Pi-hole (filter+forward) | 2026.05.0 | `kubernetes/dns/pihole.yaml`, `ansible/roles/dns` |
+| Media | Plex Media Server (QuickSync) | 1.43.2 (linuxserver) | `kubernetes/plex/*.yaml`, `ansible/roles/plex` |
 
 ## Addresses & access
 
@@ -31,6 +32,7 @@ idempotent Ansible run; nothing is hand-applied that isn't in git.
 | Pi-hole VIP / UI | `10.20.20.53` / `https://pihole.core.lab.2bit.name/admin` |
 | Technitium VIP / UI | `10.20.20.54` / `https://dns.core.lab.2bit.name` |
 | Gateway (Traefik) VIP | `10.20.20.200` (serves `*.core.lab.2bit.name` over LE wildcard) |
+| Plex VIP / UI | `10.20.20.201:32400` / `http://plex.lab.2bit.name:32400/web` (own VIP, not the gateway) |
 | MetalLB pools | dns `.53–.54` (by annotation), general `.200–.254` (auto) |
 | Admin creds / secrets | `ansible/group_vars/all/vault.yml` (ansible-vault) |
 
@@ -45,7 +47,7 @@ cd /home/lee/git/homelabbin/ansible                      # for ansible/vault
 ```bash
 cd ansible && ansible-playbook site.yml      # idempotent; safe to re-run anytime
 ```
-`site.yml` runs roles in order: `node-prep → k3s → metallb → longhorn → cert-manager → traefik → dns`. Workstation needs `helm` + python `kubernetes` (already installed).
+`site.yml` runs roles in order: `node-prep → k3s → metallb → longhorn → cert-manager → traefik → dns → plex`. Workstation needs `helm` + python `kubernetes` (already installed).
 
 ## Common operations
 
@@ -106,3 +108,15 @@ kubectl -n traefik get certificate                  # wildcard Ready=True
   HA comes from MetalLB VIP failover + Longhorn, not a backup resolver.
 - DNS apps are single-replica with `Recreate` strategy (single RWO Longhorn volume) — a node
   loss causes a brief blip while the pod reschedules + volume reattaches. Expected.
+- **Plex media is NFSv3 read-only from the UNAS** (`192.168.1.189:/var/nfs/shared/media`); the
+  UNAS `all_squash`es to `unifi-drive-nfs`, so any `PUID`/`PGID` can read it. Export is pinned
+  to the node IPs `10.20.20.11/12/13`.
+- **Plex QuickSync needs `privileged: true`** — a bare `/dev/dri` hostPath mount fails with
+  `EPERM` (device cgroup, *not* SELinux — verified). Least-privilege alternative is the Intel
+  GPU device plugin.
+- **Plex post-deploy settings live in `/config` (Longhorn), not git** — if `/config` is ever
+  rebuilt, re-apply in Settings → Network: Custom server access URLs
+  `http://10.20.20.201:32400,http://plex.lab.2bit.name:32400` (Plex auto-detects only its
+  unreachable pod IP otherwise → relay), LAN Networks `10.20.20.0/24,192.168.0.0/16`, and
+  Settings → Transcoder: enable HDR tone mapping (else DV/HDR files transcode to HEVC HDR and
+  show black in the web app). Re-claim with `-e plex_claim_token=claim-XXXX` on `site.yml`.
