@@ -33,7 +33,7 @@ first workload in the new `plex` namespace and the first NFS consumer on the clu
 | Access | MetalLB `LoadBalancer` VIP on VLAN 20, port 32400, `externalTrafficPolicy: Local` |
 | DNS | `plex.lab.2bit.name` → the VIP, added via the Ansible DNS seed loop |
 | Identity | `PLEX_CLAIM` token on first boot, stored in ansible-vault |
-| Node prep | Add `nfs-utils` to the `node-prep` role |
+| Node prep | None — `nfs-utils` already installed by `node-prep` (Longhorn prereq) |
 
 ## Architecture
 
@@ -104,7 +104,8 @@ first workload in the new `plex` namespace and the first NFS consumer on the clu
 - A small `plex` Ansible role (or extension of the existing apply flow) renders the claim
   token secret and applies `kubernetes/plex/`, wired into `site.yml` after `dns` so
   `ansible-playbook site.yml` stays the single source of truth and remains idempotent.
-- `node-prep` role gains `nfs-utils` so the kubelet can mount NFS on any node.
+- `node-prep` already installs `nfs-utils` (Longhorn prereq), so the kubelet can already
+  mount NFS on any node — no change needed (verified by a live mount test on `fed1`).
 
 ## Secrets
 
