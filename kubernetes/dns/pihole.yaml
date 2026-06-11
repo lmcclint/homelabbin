@@ -63,6 +63,10 @@ metadata:
     metallb.io/loadBalancerIPs: "10.20.20.53"
 spec:
   type: LoadBalancer
+  # Preserve the real client source IP in Pi-hole query logs.
+  # Default (Cluster) makes kube-proxy SNAT clients to the pod network (10.42.x.x);
+  # Local skips SNAT — MetalLB L2 only announces the VIP from the node running the pod.
+  externalTrafficPolicy: Local
   selector:
     app: pihole
   ports:
