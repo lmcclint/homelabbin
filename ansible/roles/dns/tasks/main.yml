@@ -126,3 +126,14 @@
   loop:
     - "{{ playbook_dir }}/../kubernetes/gateway/httproute-pihole.yaml"
     - "{{ playbook_dir }}/../kubernetes/gateway/httproute-technitium.yaml"
+
+- name: Flush the Pi-hole DNS cache so freshly-seeded records resolve immediately
+  delegate_to: localhost
+  become: false
+  run_once: true
+  # `reloaddns` = SIGHUP reload (lists + cache) without restarting FTL — no client
+  # disruption. Clears stale negative (NXDOMAIN) entries cached before a record was added.
+  ansible.builtin.command: >-
+    kubectl --kubeconfig {{ playbook_dir }}/../kubeconfig
+    -n dns exec deploy/pihole -- pihole reloaddns
+  changed_when: false
