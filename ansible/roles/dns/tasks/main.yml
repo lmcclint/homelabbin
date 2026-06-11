@@ -81,7 +81,9 @@
     - { name: "syno.lab.2bit.name",   ip: "10.20.10.20" }
     - { name: "unas.lab.2bit.name",   ip: "192.168.1.189" }
     - { name: "vcsa.lab.2bit.name",   ip: "192.168.1.75" }
+    - { name: "api.ocp1.lab.2bit.name",   ip: "192.168.1.80" }
     - { name: "plex.lab.2bit.name",   ip: "10.20.20.201" }
+    - { name: "*.apps.ocp1.lab.2bit.name",   ip: "192.168.1.81" }
     - { name: "fed1.lab.2bit.name",   ip: "10.20.20.11" }
     - { name: "fed2.lab.2bit.name",   ip: "10.20.20.12" }
     - { name: "fed3.lab.2bit.name",   ip: "10.20.20.13" }
