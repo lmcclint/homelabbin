@@ -19,7 +19,7 @@ spec:
         supplementalGroups: [105]    # 'render' GID on fed1/2/3 (renderD128 is 0666 anyway)
       containers:
         - name: plex
-          image: lscr.io/linuxserver/plex:latest   # pinned to a concrete tag in Task 5, Step 7
+          image: lscr.io/linuxserver/plex:1.43.2.10687-563d026ea-ls308   # bump: check hub.docker.com/r/linuxserver/plex/tags
           securityContext:
             privileged: true       # adds QuickSync renderD128 to the device-cgroup allow-list
           env:
