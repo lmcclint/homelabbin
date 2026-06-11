@@ -103,8 +103,10 @@ homelab-plan/
 - **Monitoring**: Prometheus + Grafana
 - **Logging**: Splunk Enterprise
 - **Secrets**: HashiCorp Vault CE (Synology)
-- **DNS**: Technitium DNS (on k8s)
-- **Load Balancing**: MetalLB + HAProxy
+- **DNS**: Technitium (authoritative+recursive) + Pi-hole (filter/forward) on k3s
+- **Load Balancing**: MetalLB (L2)
+- **Ingress**: Traefik + Gateway API (wildcard `*.core.lab.2bit.name`)
+- **Media**: Plex Media Server (QuickSync HW transcode, on k3s)
 
 ## 🔐 Security Notes
 

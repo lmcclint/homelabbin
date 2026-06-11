@@ -70,11 +70,26 @@ _Last updated: 2026-06-10 (Plan 2a complete)_
 - Technitium 15.2.0 @ VIP 10.20.20.54 (53 udp/tcp + 5380 web). Authoritative for
   lab.2bit.name (Primary zone), recursive (AllowOnlyForPrivateNetworks, root hints).
   Zone seeded via API: `*.core.lab.2bit.name`->.200 (gateway wildcard), syno, unas,
-  fed1-3. UI: dns.core.lab.2bit.name.
-- Pi-hole v6 (2026.05.0) @ VIP 10.20.20.53 (53 udp/tcp + 80 web). Filters then
-  forwards to Technitium (.54) as sole upstream; listeningMode ALL. UI:
-  pihole.core.lab.2bit.name.
+  vcsa, plex, api.ocp1, `*.apps.ocp1`, fed1-3. UI: dns.core.lab.2bit.name.
+- Pi-hole v6 (2026.05.0) @ VIP 10.20.20.53 (53 udp/tcp + 80 web), `externalTrafficPolicy:
+  Local` (real client IPs in the query log, no kube-proxy SNAT). Filters then forwards to
+  Technitium (.54) as sole upstream; listeningMode ALL. UI: pihole.core.lab.2bit.name.
+- The `dns` role ends with `pihole reloaddns` so newly-seeded records resolve via `.53`
+  immediately (clears stale NXDOMAIN negatives; no FTL restart, no client disruption).
 - Admin passwords in ansible-vault (technitium-admin / pihole-admin secrets).
 - Client VLANs (1/10/20/60) DHCP DNS = 10.20.20.53. Nodes still resolve via UDM.
 - Single-HA-VIP model: no non-filtering secondary (avoids ad leakage). MetalLB VIP
   failover + Longhorn give single-node-failure recovery (brief blip on reschedule).
+
+## Media — Plex (Plan 3)
+- Namespace `plex`. Single-replica Deployment (Recreate), `lscr.io/linuxserver/plex`
+  pinned. On its own MetalLB VIP `10.20.20.201:32400` (LoadBalancer, `externalTrafficPolicy:
+  Local`) — *not* behind the gateway (Plex apps dislike being proxied); DNS `plex.lab.2bit.name`.
+- Storage: media via a static NFSv3 PV (read-only) from the UNAS
+  `192.168.1.189:/var/nfs/shared/media` (UNAS `all_squash`s to `unifi-drive-nfs`, so any
+  PUID/PGID reads it); config on a Longhorn RWO PVC.
+- QuickSync HW transcoding via hostPath `/dev/dri` + container `privileged: true` (a bare
+  hostPath fails with EPERM — device cgroup, **not** SELinux). Verified hevc_vaapi
+  decode+encode on the N100 iGPU.
+- One-time claim: `ansible-playbook site.yml -e plex_claim_token=claim-XXXX`. Post-deploy
+  network/transcoder prefs live in `/config` (Longhorn) — see cluster-operations.md gotchas.

@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 > **⚡ Working on the deployed core cluster?** Read
 > [`docs/runbooks/cluster-operations.md`](./docs/runbooks/cluster-operations.md) first —
 > it's the fast orientation for the live `fed1/2/3` k3s cluster (k3s + MetalLB + Longhorn
-> + cert-manager + Traefik/Gateway API + Pi-hole + Technitium), what file controls what,
+> + cert-manager + Traefik/Gateway API + Pi-hole + Technitium + Plex), what file controls what,
 > and recipes for adding DNS/services/secrets. Everything is config-as-code via
 > `ansible/site.yml`. Much of the prose below is the original aspirational plan; the
 > runbooks in `docs/runbooks/` reflect what's actually built.
