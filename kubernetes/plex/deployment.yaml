@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plex
+  namespace: plex
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate                 # single RWO config volume — never two pods at once
+  selector:
+    matchLabels:
+      app: plex
+  template:
+    metadata:
+      labels:
+        app: plex
+    spec:
+      containers:
+        - name: plex
+          image: lscr.io/linuxserver/plex:latest   # pinned to a concrete tag in Task 5, Step 7
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "988"          # mirrors media group ownership (cosmetic; all_squash ignores it)
+            - name: TZ
+              value: America/New_York
+            - name: VERSION
+              value: docker          # pin Plex to the image's bundled version; no in-place self-update
+            - name: PLEX_CLAIM
+              valueFrom:
+                secretKeyRef:
+                  name: plex-claim
+                  key: token
+                  optional: true     # absent on re-runs after the first claim — harmless
+          ports:
+            - { containerPort: 32400, protocol: TCP }
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: media
+              mountPath: /media
+              readOnly: true
+            - name: transcode
+              mountPath: /transcode
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              memory: 6Gi            # no CPU limit so transcodes can burst
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: plex-config
+        - name: media
+          persistentVolumeClaim:
+            claimName: plex-media
+        - name: transcode
+          emptyDir: {}               # ephemeral transcode scratch; keeps churn off Longhorn
