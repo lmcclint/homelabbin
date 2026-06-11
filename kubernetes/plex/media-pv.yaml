@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: plex-media
+spec:
+  capacity:
+    storage: 100Ti                 # nominal; NFS ignores capacity, but the field is required
+  accessModes: ["ReadOnlyMany"]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""             # static binding, no provisioner
+  mountOptions: ["ro", "nfsvers=3", "hard"]
+  nfs:
+    server: 192.168.1.189
+    path: /var/nfs/shared/media
+  claimRef:                        # bind 1:1 to our PVC so nothing else can claim it
+    namespace: plex
+    name: plex-media
