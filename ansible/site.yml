@@ -10,3 +10,4 @@
     - cert-manager
     - traefik
     - dns
+    - plex

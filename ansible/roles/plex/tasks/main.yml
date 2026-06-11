@@ -1,0 +1,64 @@
+---
+- name: Ensure the plex namespace exists
+  delegate_to: localhost
+  become: false
+  run_once: true
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ playbook_dir }}/../kubernetes/plex/namespace.yaml"
+    kubeconfig: "{{ playbook_dir }}/../kubeconfig"
+
+- name: Apply the static media NFS PersistentVolume
+  delegate_to: localhost
+  become: false
+  run_once: true
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ playbook_dir }}/../kubernetes/plex/media-pv.yaml"
+    kubeconfig: "{{ playbook_dir }}/../kubeconfig"
+
+- name: Apply the Plex PVCs
+  delegate_to: localhost
+  become: false
+  run_once: true
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ playbook_dir }}/../kubernetes/plex/pvcs.yaml"
+    kubeconfig: "{{ playbook_dir }}/../kubeconfig"
+
+- name: Render the Plex claim secret (only when a token is supplied)
+  delegate_to: localhost
+  become: false
+  run_once: true
+  when: plex_claim_token is defined and (plex_claim_token | length > 0)
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('template', 'plex-claim-secret.yaml.j2') | from_yaml }}"
+    kubeconfig: "{{ playbook_dir }}/../kubeconfig"
+
+- name: Deploy Plex
+  delegate_to: localhost
+  become: false
+  run_once: true
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ playbook_dir }}/../kubernetes/plex/deployment.yaml"
+    kubeconfig: "{{ playbook_dir }}/../kubeconfig"
+
+- name: Expose the Plex Service
+  delegate_to: localhost
+  become: false
+  run_once: true
+  kubernetes.core.k8s:
+    state: present
+    src: "{{ playbook_dir }}/../kubernetes/plex/service.yaml"
+    kubeconfig: "{{ playbook_dir }}/../kubeconfig"
+
+- name: Wait for Plex to be ready
+  delegate_to: localhost
+  become: false
+  run_once: true
+  ansible.builtin.command: >-
+    kubectl --kubeconfig {{ playbook_dir }}/../kubeconfig
+    -n plex rollout status deploy/plex --timeout=300s
+  changed_when: false
