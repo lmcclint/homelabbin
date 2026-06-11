@@ -15,9 +15,13 @@ spec:
       labels:
         app: plex
     spec:
+      securityContext:
+        supplementalGroups: [105]    # 'render' GID on fed1/2/3 (renderD128 is 0666 anyway)
       containers:
         - name: plex
           image: lscr.io/linuxserver/plex:latest   # pinned to a concrete tag in Task 5, Step 7
+          securityContext:
+            privileged: true       # adds QuickSync renderD128 to the device-cgroup allow-list
           env:
             - name: PUID
               value: "1000"
@@ -43,6 +47,8 @@ spec:
               readOnly: true
             - name: transcode
               mountPath: /transcode
+            - name: dri
+              mountPath: /dev/dri
           resources:
             requests:
               cpu: 500m
@@ -58,3 +64,7 @@ spec:
             claimName: plex-media
         - name: transcode
           emptyDir: {}               # ephemeral transcode scratch; keeps churn off Longhorn
+        - name: dri
+          hostPath:
+            path: /dev/dri
+            type: Directory
